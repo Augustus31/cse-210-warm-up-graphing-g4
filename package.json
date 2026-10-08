@@ -1,0 +1,9 @@
+{
+  "name": "cse-210-warm-up-graphing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A graphing tool for CSE 210.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
