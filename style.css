@@ -1,0 +1,72 @@
+:root {
+  --color-ink: #000;
+  --color-paper: #fff;
+  --color-grey: #e0e0e0;
+  --font-body: 'IM Fell DW Pica', Georgia, serif;
+  --border: 3px solid var(--color-ink);
+  --shadow: 4px 4px 0 var(--color-ink);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+}
+
+header {
+  padding: 36px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--color-grey);
+  font-size: 64px;
+}
+
+main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 2px;
+  border: var(--border);
+  background: var(--color-ink);
+}
+.square-area { aspect-ratio: 2; }
+.bottom-area { grid-column: 1 / -1; }
+
+.panel {
+  padding: 1%;
+  background: var(--color-paper);
+}
+
+button {
+  padding: 6px 24px;
+  border: var(--border);
+  background: var(--color-paper);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover { background: var(--color-ink); color: var(--color-paper); }
+button:active { transform: translate(2px, 2px); }
+#add-row { display: block; width: 50%; margin: 4px auto 0; }
+
+input {
+  width: 100%;
+  padding: 6px;
+  border: var(--border);
+  background: var(--color-paper);
+  color: inherit;
+  font: inherit;
+}
+input:focus { outline: none; box-shadow: var(--shadow); }
+
+.table-scroll { max-height: 40vh; overflow-y: auto; }
+.coordinate-table { width: 100%; table-layout: fixed; border-spacing: 4px; }
+.coordinate-table th { text-align: left; }
