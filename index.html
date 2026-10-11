@@ -26,7 +26,8 @@
   <script type="module">
     import { GraphSettings } from './components/GraphSettings.js';
     import { DataTable } from './components/DataTable.js';
-    import { setGraphValue, updateGraph } from './graphState.js';
+    import { setGraphValue, subscribeToGraph, updateGraph } from './graphState.js';
+    import { renderGraph } from './graphRender.js';
 
     function saveToGraph(key) {
       return function (value) {
@@ -57,6 +58,8 @@
       onPointsChange: saveToGraph('points'),
     }));
 
+    const chart = document.getElementById('chart');
+    subscribeToGraph(graph => renderGraph(graph, chart));
     updateGraph();
   </script>
 </body>

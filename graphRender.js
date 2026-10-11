@@ -1,6 +1,5 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
-const CHART = { width: 640, height: 400, margin: { top: 24, right: 24, bottom: 62, left: 72 } };
-
+const CHART = { width: 800, height: 400, margin: { top: 52, right: 32, bottom: 76, left: 92 } };
 
 function niceStep(range) {
   const roughStep = range / 4;
@@ -10,8 +9,16 @@ function niceStep(range) {
   return niceFraction * power;
 }
 
-// Pad each data range, then round its limits to readable tick intervals.
-function calculateBounds(points, key) {
+// Keep the render branch's padded, readable bounds and apply any UI range limits.
+/**
+ * Calculates padded axis bounds and readable tick values.
+ * @param {Object[]} points Valid {x, y} points.
+ * @param {string} key Axis coordinate to inspect.
+ * @param {?number} requestedMin Optional UI minimum.
+ * @param {?number} requestedMax Optional UI maximum.
+ * @returns {{min: number, max: number, ticks: number[]}}
+ */
+function calculateBounds(points, key, requestedMin, requestedMax) {
   const values = points.map(point => point[key]);
   let min = Math.min(...values);
   let max = Math.max(...values);
@@ -22,8 +29,19 @@ function calculateBounds(points, key) {
   const step = niceStep(max - min);
   min = Math.floor(min / step) * step;
   max = Math.ceil(max / step) * step;
+  if (Number.isFinite(requestedMin)) min = requestedMin;
+  if (Number.isFinite(requestedMax)) max = requestedMax;
+  if (max <= min) {
+    const padding = Math.max(Math.abs(min) * 0.1, 1);
+    if (Number.isFinite(requestedMin) && !Number.isFinite(requestedMax)) max = min + padding;
+    else if (!Number.isFinite(requestedMin) && Number.isFinite(requestedMax)) min = max - padding;
+    else { min -= padding; max += padding; }
+  }
+
+  const tickStep = niceStep(max - min);
   const ticks = [];
-  for (let value = min, i = 0; value <= max + step * 1e-8 && i < 100; value += step, i++) {
+  for (let value = Math.ceil(min / tickStep) * tickStep, i = 0;
+    value <= max + tickStep * 1e-8 && i < 100; value += tickStep, i++) {
     ticks.push(Number(value.toPrecision(12)));
   }
   return { min, max, ticks };
@@ -52,14 +70,16 @@ function formatTick(value) {
   return Number(value.toPrecision(6)).toString();
 }
 
-// Shared axes keep tick positions and chart points on the same scales.
-function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, xLabel, yLabel) {
+// Preserve the shared axes and scale behavior used by the existing renderer.
+/** Draws both axes, their ticks, and the configured axis labels. */
+function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph) {
   const { width, height, margin } = CHART;
   const left = margin.left;
   const right = width - margin.right;
   const top = margin.top;
   const bottom = height - margin.bottom;
-  const axisStyle = { stroke: "#475569", "stroke-width": 1.5 };
+  const axesColor = graph.axesColor || "var(--color-ink, #000000)";
+  const axisStyle = { stroke: axesColor, "stroke-width": 2.5 };
 
   svg.appendChild(svgElement("line", { x1: left, y1: bottom, x2: right, y2: bottom, ...axisStyle }));
   svg.appendChild(svgElement("line", { x1: left, y1: top, x2: left, y2: bottom, ...axisStyle }));
@@ -76,62 +96,102 @@ function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, xLabel, yLabel) {
     addText(svg, formatTick(tick), left - 9, y + 4, { "text-anchor": "end", class: "tick-label" });
   }
 
-  addText(svg, xLabel, (left + right) / 2, height - 12, { "text-anchor": "middle", class: "axis-label" });
-  addText(svg, yLabel, 19, (top + bottom) / 2, {
-    "text-anchor": "middle", class: "axis-label", transform: `rotate(-90 19 ${(top + bottom) / 2})`
+  addText(svg, graph.xAxisName || "X", (left + right) / 2, height - 12, {
+    "text-anchor": "middle", class: "axis-label", fill: axesColor
+  });
+  addText(svg, graph.yAxisName || "Y", 19, (top + bottom) / 2, {
+    "text-anchor": "middle", class: "axis-label", fill: axesColor,
+    transform: `rotate(-90 19 ${(top + bottom) / 2})`
   });
 }
 
-function prepareChart(data, container, title) {
-  if (!(container instanceof Element)) return null;
-  container.replaceChildren();
-  const points = data.points;
+/** Filters input points and prepares the SVG, scales, and axes. */
+function prepareChart(graph, container, title) {
+  if (!container || typeof container.replaceChildren !== "function") return null;
+  const points = Array.isArray(graph.points)
+    ? graph.points.filter(point => point && Number.isFinite(point.x) && Number.isFinite(point.y))
+    : [];
+  if (points.length === 0) {
+    container.replaceChildren();
+    const message = document.createElement("p");
+    message.className = "chart-empty";
+    message.textContent = "Add at least one complete X/Y pair to see the graph.";
+    container.appendChild(message);
+    return null;
+  }
 
   const { width, height, margin } = CHART;
-  const xBounds = calculateBounds(data.points, "x");
-  const yBounds = calculateBounds(data.points, "y");
+  const range = graph.range && typeof graph.range === "object" ? graph.range : {};
+  const xBounds = calculateBounds(points, "x", range.xMin, range.xMax);
+  const yBounds = calculateBounds(points, "y", range.yMin, range.yMax);
   const scaleX = createScale(xBounds.min, xBounds.max, margin.left, width - margin.right);
   const scaleY = createScale(yBounds.min, yBounds.max, margin.top, height - margin.bottom, true);
   const svg = svgElement("svg", {
     viewBox: `0 0 ${width} ${height}`,
     role: "img",
-    "aria-label": title
+    "font-family": "var(--font-body, inherit)",
+    "aria-label": graph.title || title
   });
 
-  drawAxes(svg, xBounds, yBounds, scaleX, scaleY, data.xAxisName, data.yAxisName);
+  if (graph.title) addText(svg, graph.title, width / 2, 30, { "text-anchor": "middle", class: "chart-title" });
+  drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph);
   return { svg, points, scaleX, scaleY };
 }
 
-function drawPoints(svg, points, scaleX, scaleY) {
+function drawPoints(svg, points, scaleX, scaleY, graph) {
+  const color = graph.pointColor || "var(--color-ink, #000000)";
   for (const point of points) {
-    svg.appendChild(svgElement("circle", {
-      cx: scaleX(point.x), cy: scaleY(point.y), r: 5, class: "data-point"
-    }));
+    const x = scaleX(point.x);
+    const y = scaleY(point.y);
+    let mark;
+    if (graph.pointStyle === "square") {
+      mark = svgElement("rect", { x: x - 7, y: y - 7, width: 14, height: 14, fill: color, class: "data-point" });
+    } else if (graph.pointStyle === "triangle") {
+      mark = svgElement("polygon", { points: `${x},${y - 8} ${x - 7},${y + 6} ${x + 7},${y + 6}`, fill: color, class: "data-point" });
+    } else if (graph.pointStyle === "cross") {
+      mark = svgElement("path", {
+        d: `M ${x - 6} ${y - 6} L ${x + 6} ${y + 6} M ${x + 6} ${y - 6} L ${x - 6} ${y + 6}`,
+        stroke: color, class: "data-point data-point-cross"
+      });
+    } else {
+      mark = svgElement("circle", { cx: x, cy: y, r: 7, fill: color, class: "data-point" });
+    }
+    svg.appendChild(mark);
   }
 }
 
-function renderScatterPlot(data, container) {
-  const chart = prepareChart(data, container, "Scatter plot");
+function renderScatterPlot(graph, container) {
+  const chart = prepareChart(graph, container, "Scatter graph");
   if (!chart) return;
-  drawPoints(chart.svg, chart.points, chart.scaleX, chart.scaleY);
-  container.appendChild(chart.svg);
+  drawPoints(chart.svg, chart.points, chart.scaleX, chart.scaleY, graph);
+  container.replaceChildren(chart.svg);
 }
 
-function renderLineChart(data, container) {
-  const chart = prepareChart(data, container, "Line chart");
+function renderLineChart(graph, container) {
+  const chart = prepareChart(graph, container, "Line graph");
   if (!chart) return;
 
-  // Sort a copy so the caller's array keeps its original order.
+  // Sort a copy, keeping the original graph state order intact.
   const sortedPoints = [...chart.points].sort((a, b) => a.x - b.x);
-  const coordinates = sortedPoints
-    .map(point => `${chart.scaleX(point.x)},${chart.scaleY(point.y)}`)
-    .join(" ");
-  chart.svg.appendChild(svgElement("polyline", { points: coordinates, class: "data-line" }));
-  drawPoints(chart.svg, sortedPoints, chart.scaleX, chart.scaleY);
-  container.appendChild(chart.svg);
+  if (sortedPoints.length > 1) {
+    const coordinates = sortedPoints
+      .map(point => `${chart.scaleX(point.x)},${chart.scaleY(point.y)}`)
+      .join(" ");
+    chart.svg.appendChild(svgElement("polyline", {
+      points: coordinates, class: "data-line", stroke: graph.lineColor || "var(--color-ink, #000000)"
+    }));
+  }
+  drawPoints(chart.svg, sortedPoints, chart.scaleX, chart.scaleY, graph);
+  container.replaceChildren(chart.svg);
 }
 
+/**
+ * Renders graph state from the UI into the chart container.
+ * @param {Object} data Graph settings and point data from graphState.js.
+ * @param {Element} container The #chart section.
+ */
 export function renderGraph(data, container) {
-  if (data.type.toLowerCase() === 'line') return renderLineChart(data, container);
-  return renderScatterPlot(data, container);
+  const graph = data && typeof data === "object" ? data : {};
+  if (graph.type === "line") return renderLineChart(graph, container);
+  return renderScatterPlot(graph, container);
 }
