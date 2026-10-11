@@ -64,7 +64,8 @@ x,y
                 csvData = result.data;
                 csvMessage.textContent =
                     `Loaded ${csvData.length} points. ` +
-                    `X: ${result.headers.x}, Y: ${result.headers.y}`;
+                    `X: ${result.headers.x}, Y: ${result.headers.y}` +
+                    result.warnings.map(warning => ` Warning: ${warning}`).join("");
             };
             reader.readAsText(file);
         });
@@ -104,7 +105,8 @@ x,y
                 }
                 textMessage.textContent =
                     `Loaded ${result.data.length} points. ` +
-                    `X: ${result.headers.x}, Y: ${result.headers.y}`;
+                    `X: ${result.headers.x}, Y: ${result.headers.y}` +
+                    result.warnings.map(warning => ` Warning: ${warning}`).join("");
                 renderScatterPlot(result.data, chart);
             });
         // when button is clicked, render the line plot using text box data
@@ -121,7 +123,8 @@ x,y
                 }
                 textMessage.textContent =
                     `Loaded ${result.data.length} points. ` +
-                    `X: ${result.headers.x}, Y: ${result.headers.y}`;
+                    `X: ${result.headers.x}, Y: ${result.headers.y}` +
+                    result.warnings.map(warning => ` Warning: ${warning}`).join("");
                 renderLineChart(result.data, chart);
             });
     </script>
