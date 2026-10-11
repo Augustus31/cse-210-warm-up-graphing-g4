@@ -3,30 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Graph Designer</title>
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; color: #222; }
-    header { padding: 16px 24px; background: #f2f2f2; }
-    nav { display: flex; justify-content: space-between; max-width: 900px; margin: auto; }
-    nav a { margin-left: 16px; color: inherit; text-decoration: none; }
-    main { max-width: 900px; margin: 48px auto; padding: 0 24px; }
-  </style>
+  <title>Simpligraph</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
+
+
 <body>
   <header>
-    <nav>
-      <strong>My Website</strong>
-      <div>
-        <a href="#link1">Home</a>
-        <a href="#link2">About</a>
-        <a href="#link3">Contact</a>
-      </div>
-    </nav>
+    <strong>Simpligraph</strong>
+    <img src="Resources/Images/calculator-icon.png">
   </header>
 
-  <main id="home">
-    <h1>Welcome</h1>
-    <p>Sample template: fill in content here</p>
+  <main>
+    <aside class="panel" id="data-table"></aside>
+    <section class="panel" id="chart"></section>
+    <section class="panel bottom-area" id="graph-settings"></section>
   </main>
+  <script type="module">
+    import { GraphSettings } from './components/GraphSettings.js';
+    import { DataTable } from './components/DataTable.js';
+    import { setGraphValue, updateGraph } from './graphState.js';
+
+    function saveToGraph(key) {
+      return function (value) {
+        setGraphValue(key, value);
+      };
+    }
+
+    document.getElementById('graph-settings').append(GraphSettings({
+      onPlotTypeChange: saveToGraph('type'),
+      onTitleChange: saveToGraph('title'),
+      onPointColorChange: saveToGraph('pointColor'),
+      onLineColorChange: saveToGraph('lineColor'),
+      onAxesColorChange: saveToGraph('axesColor'),
+      onPointStyleChange: saveToGraph('pointStyle'),
+      onXAxisNameChange: saveToGraph('xAxisName'),
+      onYAxisNameChange: saveToGraph('yAxisName'),
+      onAxisRangeChange: saveToGraph('range'),
+      onCsvLoad(file) {
+        //parse the csv file and set the points in the graph
+        //use setGraphValue('points', parsedPoints);
+      },
+      onSave() {
+        //export the graph (if we have time for this, if not imma just delete the button)
+      },
+    }));
+
+    document.getElementById('data-table').append(DataTable({
+      onPointsChange: saveToGraph('points'),
+    }));
+
+    updateGraph();
+  </script>
 </body>
 </html>
+
+
+<!-- icon credit: https://creazilla.com/media/icon/3248798/calculator -->
