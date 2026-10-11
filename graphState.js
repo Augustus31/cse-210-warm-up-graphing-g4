@@ -20,7 +20,7 @@ export function subscribeToGraph(subscriber) {
 }
 
 export function setGraphValue(key, value) {
-  if (!Object.hasOwn(graph, key)) throw new Error(`value dont exist in graph`);
+  if (!Object.hasOwn(graph, key)) throw new Error(`value does not exist in graph`);
   graph[key] = value;
   updateGraph();
 }
