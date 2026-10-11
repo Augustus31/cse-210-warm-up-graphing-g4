@@ -15,52 +15,49 @@
 <body>
   <header>
     <strong>Simpligraph</strong>
-    <img id="calculator-icon" src="Resources/Images/calculator-icon.png">
+    <img src="Resources/Images/calculator-icon.png">
   </header>
 
-  <main id="home">
-    <aside class="panel sidebar" aria-label="Left sidebar">
-      <div class="table-scroll">
-        <table class="coordinate-table">
-          <thead>
-            <tr><th scope="col">X axis</th><th scope="col">Y axis</th></tr>
-          </thead>
-          <tbody id="coordinate-rows">
-            <tr>
-              <td><input type="number" step="any" aria-label="X 1"></td>
-              <td><input type="number" step="any" aria-label="Y 1"></td>
-            </tr>
-            <tr>
-              <td><input type="number" step="any" aria-label="X 2"></td>
-              <td><input type="number" step="any" aria-label="Y 2"></td>
-            </tr>
-            <tr>
-              <td><input type="number" step="any" aria-label="X 3"></td>
-              <td><input type="number" step="any" aria-label="Y 3"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <button id="add-row" type="button">Add row</button>
-    </aside>
-    <section class="panel square-area" aria-label="Square area"></section>
-    <section class="panel bottom-area" aria-label="Bottom area"></section>
+  <main>
+    <aside class="panel" id="data-table"></aside>
+    <section class="panel" id="chart"></section>
+    <section class="panel bottom-area" id="graph-settings"></section>
   </main>
-  <script>
-    const coordinateRows = document.getElementById('coordinate-rows');
-    document.getElementById('add-row').addEventListener('click', () => {
-      const rowNumber = coordinateRows.rows.length + 1;
-      const row = coordinateRows.insertRow();
+  <script type="module">
+    import { GraphSettings } from './components/GraphSettings.js';
+    import { DataTable } from './components/DataTable.js';
+    import { setGraphValue, updateGraph } from './graphState.js';
 
-      for (const axis of ['X', 'Y']) {
-        const cell = row.insertCell();
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.step = 'any';
-        input.setAttribute('aria-label', `${axis} ${rowNumber}`);
-        cell.append(input);
-      }
-    });
+    function saveToGraph(key) {
+      return function (value) {
+        setGraphValue(key, value);
+      };
+    }
+
+    document.getElementById('graph-settings').append(GraphSettings({
+      onPlotTypeChange: saveToGraph('type'),
+      onTitleChange: saveToGraph('title'),
+      onPointColorChange: saveToGraph('pointColor'),
+      onLineColorChange: saveToGraph('lineColor'),
+      onAxesColorChange: saveToGraph('axesColor'),
+      onPointStyleChange: saveToGraph('pointStyle'),
+      onXAxisNameChange: saveToGraph('xAxisName'),
+      onYAxisNameChange: saveToGraph('yAxisName'),
+      onAxisRangeChange: saveToGraph('range'),
+      onCsvLoad(file) {
+        //parse the csv file and set the points in the graph
+        //use setGraphValue('points', parsedPoints);
+      },
+      onSave() {
+        //export the graph (if we have time for this, if not imma just delete the button)
+      },
+    }));
+
+    document.getElementById('data-table').append(DataTable({
+      onPointsChange: saveToGraph('points'),
+    }));
+
+    updateGraph();
   </script>
 </body>
 </html>
