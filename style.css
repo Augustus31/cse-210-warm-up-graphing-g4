@@ -1,0 +1,35 @@
+/* Keep these styles on the charts so the host page keeps its own layout. */
+.chart {
+  width: 100%;
+  margin: 16px 0 32px;
+}
+
+.chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: inherit;
+}
+
+.tick-label {
+  fill: #555;
+  font-size: 12px;
+}
+
+.axis-label {
+  fill: #222;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.data-point {
+  fill: #2563eb;
+}
+
+.data-line {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
