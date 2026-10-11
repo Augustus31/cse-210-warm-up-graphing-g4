@@ -1,6 +1,12 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CHART = { width: 800, height: 400, margin: { top: 52, right: 32, bottom: 76, left: 92 } };
 
+/**
+ * Chooses a simple number to put between each pair of tick marks.
+ * This keeps the axis from being filled with messy decimal numbers.
+ * @param {number} range The size of the axis range.
+ * @returns {number} The gap between tick marks.
+ */
 function niceStep(range) {
   const roughStep = range / 4;
   const power = 10 ** Math.floor(Math.log10(roughStep));
@@ -9,14 +15,14 @@ function niceStep(range) {
   return niceFraction * power;
 }
 
-// Keep the render branch's padded, readable bounds and apply any UI range limits.
 /**
- * Calculates padded axis bounds and readable tick values.
- * @param {Object[]} points Valid {x, y} points.
- * @param {string} key Axis coordinate to inspect.
- * @param {?number} requestedMin Optional UI minimum.
- * @param {?number} requestedMax Optional UI maximum.
- * @returns {{min: number, max: number, ticks: number[]}}
+ * Finds the start, end, and labels for one axis.
+ * We leave a little room around the points so they do not touch the edge.
+ * @param {Object[]} points The points currently in the graph.
+ * @param {string} key Use "x" for the horizontal axis or "y" for the vertical axis.
+ * @param {?number} requestedMin A minimum entered in the UI, if there is one.
+ * @param {?number} requestedMax Same above（but it's mamimum)
+ * @returns {{min: number, max: number, ticks: number[]}} The axis limits and labels.
  */
 function calculateBounds(points, key, requestedMin, requestedMax) {
   const values = points.map(point => point[key]);
@@ -40,6 +46,8 @@ function calculateBounds(points, key, requestedMin, requestedMax) {
 
   const tickStep = niceStep(max - min);
   const ticks = [];
+  // Start at the first clean label inside the range. The limit prevents a bad
+  // range from creating an endless list of labels.
   for (let value = Math.ceil(min / tickStep) * tickStep, i = 0;
     value <= max + tickStep * 1e-8 && i < 100; value += tickStep, i++) {
     ticks.push(Number(value.toPrecision(12)));
@@ -47,6 +55,16 @@ function calculateBounds(points, key, requestedMin, requestedMax) {
   return { min, max, ticks };
 }
 
+/**
+ * Turns a graph value into the right spot on the SVG.
+ * SVG counts down from the top, so the y values need to be flipped.
+ * @param {number} min Smallest graph value.
+ * @param {number} max Largest graph value.
+ * @param {number} pixelMin First screen position.
+ * @param {number} pixelMax Last screen position.
+ * @param {boolean} invert Flip the result for the y axis.
+ * @returns {(value: number) => number} A function that turns values into positions.
+ */
 function createScale(min, max, pixelMin, pixelMax, invert = false) {
   return value => {
     const ratio = (value - min) / (max - min);
@@ -188,7 +206,7 @@ function renderLineChart(graph, container) {
 /**
  * Renders graph state from the UI into the chart container.
  * @param {Object} data Graph settings and point data from graphState.js.
- * @param {Element} container The #chart section.
+ * @param {Element} container The chart section.
  */
 export function renderGraph(data, container) {
   const graph = data && typeof data === "object" ? data : {};
