@@ -1,12 +1,6 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CHART = { width: 640, height: 400, margin: { top: 24, right: 24, bottom: 62, left: 72 } };
 
-// Ignore malformed points so one bad observation does not prevent a chart.
-function validPoints(data) {
-  return Array.isArray(data)
-    ? data.filter(point => point && Number.isFinite(point.x) && Number.isFinite(point.y))
-    : [];
-}
 
 function niceStep(range) {
   const roughStep = range / 4;
@@ -59,7 +53,7 @@ function formatTick(value) {
 }
 
 // Shared axes keep tick positions and chart points on the same scales.
-function drawAxes(svg, xBounds, yBounds, scaleX, scaleY) {
+function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, xLabel, yLabel) {
   const { width, height, margin } = CHART;
   const left = margin.left;
   const right = width - margin.right;
@@ -82,8 +76,8 @@ function drawAxes(svg, xBounds, yBounds, scaleX, scaleY) {
     addText(svg, formatTick(tick), left - 9, y + 4, { "text-anchor": "end", class: "tick-label" });
   }
 
-  addText(svg, "X", (left + right) / 2, height - 12, { "text-anchor": "middle", class: "axis-label" });
-  addText(svg, "Y", 19, (top + bottom) / 2, {
+  addText(svg, xLabel, (left + right) / 2, height - 12, { "text-anchor": "middle", class: "axis-label" });
+  addText(svg, yLabel, 19, (top + bottom) / 2, {
     "text-anchor": "middle", class: "axis-label", transform: `rotate(-90 19 ${(top + bottom) / 2})`
   });
 }
@@ -91,15 +85,11 @@ function drawAxes(svg, xBounds, yBounds, scaleX, scaleY) {
 function prepareChart(data, container, title) {
   if (!(container instanceof Element)) return null;
   container.replaceChildren();
-  const points = validPoints(data);
-  if (points.length === 0) {
-    container.textContent = "No valid data to display.";
-    return null;
-  }
+  const points = data.points;
 
   const { width, height, margin } = CHART;
-  const xBounds = calculateBounds(points, "x");
-  const yBounds = calculateBounds(points, "y");
+  const xBounds = calculateBounds(data.points, "x");
+  const yBounds = calculateBounds(data.points, "y");
   const scaleX = createScale(xBounds.min, xBounds.max, margin.left, width - margin.right);
   const scaleY = createScale(yBounds.min, yBounds.max, margin.top, height - margin.bottom, true);
   const svg = svgElement("svg", {
@@ -108,7 +98,7 @@ function prepareChart(data, container, title) {
     "aria-label": title
   });
 
-  drawAxes(svg, xBounds, yBounds, scaleX, scaleY);
+  drawAxes(svg, xBounds, yBounds, scaleX, scaleY, data.xAxisName, data.yAxisName);
   return { svg, points, scaleX, scaleY };
 }
 
@@ -139,4 +129,9 @@ function renderLineChart(data, container) {
   chart.svg.appendChild(svgElement("polyline", { points: coordinates, class: "data-line" }));
   drawPoints(chart.svg, sortedPoints, chart.scaleX, chart.scaleY);
   container.appendChild(chart.svg);
+}
+
+export function renderGraph(data, container) {
+  if (data.type.toLowerCase() === 'line') return renderLineChart(data, container);
+  return renderScatterPlot(data, container);
 }
