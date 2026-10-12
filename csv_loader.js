@@ -1,4 +1,4 @@
-function createCsvLoader({ parse, onStatus }) {
+function createCsvLoader({ parse, onStatus, setGraphValue = () => {} }) {
     let requestId = 0;
 
     async function load(file) {
@@ -21,6 +21,9 @@ function createCsvLoader({ parse, onStatus }) {
             onStatus(result.error);
             return result;
         }
+        setGraphValue('points', result.data);
+        setGraphValue('xAxisName', result.headers.x);
+        setGraphValue('yAxisName', result.headers.y);
         onStatus(
             `Parsed ${result.data.length} points. X: ${result.headers.x}, Y: ${result.headers.y}` +
             result.warnings.map(warning => ` Warning: ${warning}`).join('')

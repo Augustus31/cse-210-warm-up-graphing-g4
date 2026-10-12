@@ -36,6 +36,7 @@
     csvStatus.setAttribute('aria-live', 'polite');
     const csvLoader = createCsvLoader({
       parse: parseCSV,
+      setGraphValue,
       onStatus: message => { csvStatus.textContent = message; },
     });
 
