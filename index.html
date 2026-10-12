@@ -28,7 +28,8 @@
   <script type="module">
     import { GraphSettings } from './components/GraphSettings.js';
     import { DataTable } from './components/DataTable.js';
-    import { setGraphValue, updateGraph } from './graphState.js';
+    import { setGraphValue, subscribeToGraph, updateGraph } from './graphState.js';
+    import { renderGraph } from './graphRender.js';
 
     const csvStatus = document.createElement('p');
     csvStatus.id = 'csv-status';
@@ -72,6 +73,8 @@
     }));
 
     document.querySelector('[name="csv"]').closest('.settings-column').append(csvStatus);
+    const chart = document.getElementById('chart');
+    subscribeToGraph(graph => renderGraph(graph, chart));
     updateGraph();
   </script>
 </body>
