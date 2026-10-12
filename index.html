@@ -23,10 +23,21 @@
     <section class="panel" id="chart"></section>
     <section class="panel bottom-area" id="graph-settings"></section>
   </main>
+  <script src="data_processer.js"></script>
+  <script src="csv_loader.js"></script>
   <script type="module">
     import { GraphSettings } from './components/GraphSettings.js';
     import { DataTable } from './components/DataTable.js';
     import { setGraphValue, updateGraph } from './graphState.js';
+
+    const csvStatus = document.createElement('p');
+    csvStatus.id = 'csv-status';
+    csvStatus.setAttribute('role', 'status');
+    csvStatus.setAttribute('aria-live', 'polite');
+    const csvLoader = createCsvLoader({
+      parse: parseCSV,
+      onStatus: message => { csvStatus.textContent = message; },
+    });
 
     function saveToGraph(key) {
       return function (value) {
@@ -45,8 +56,7 @@
       onYAxisNameChange: saveToGraph('yAxisName'),
       onAxisRangeChange: saveToGraph('range'),
       onCsvLoad(file) {
-        //parse the csv file and set the points in the graph
-        //use setGraphValue('points', parsedPoints);
+        return csvLoader.load(file);
       },
       onSave() {
         //export the graph (if we have time for this, if not imma just delete the button)
@@ -54,9 +64,13 @@
     }));
 
     document.getElementById('data-table').append(DataTable({
-      onPointsChange: saveToGraph('points'),
+      onPointsChange(points) {
+        csvLoader.cancel();
+        setGraphValue('points', points);
+      },
     }));
 
+    document.querySelector('[name="csv"]').closest('.settings-column').append(csvStatus);
     updateGraph();
   </script>
 </body>
