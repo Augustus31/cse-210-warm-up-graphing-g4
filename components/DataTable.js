@@ -24,6 +24,7 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
     <button type="button" class="add-row">Add row</button>
   `;
   const tableBody = dataTable.querySelector('tbody');
+  const [xHeader, yHeader] = dataTable.querySelectorAll('th');
 
   function addRow() {
     const rowNumber = tableBody.rows.length + 1;
@@ -57,6 +58,12 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
       xInput.value = point.x;
       yInput.value = point.y;
     }
+  };
+
+  // Column headers show the axis names or "X axis" / "Y axis" if empty
+  dataTable.setAxisNames = function (xName, yName) {
+    xHeader.textContent = xName || 'X axis';
+    yHeader.textContent = yName || 'Y axis';
   };
 
   for (let i = 0; i < startingRowCount; i++) addRow();

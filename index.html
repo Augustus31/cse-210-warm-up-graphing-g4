@@ -79,6 +79,7 @@
     subscribeToGraph(graph => renderGraph(graph, chart));
     subscribeToGraph(graph => dataTable.setPoints(graph.points));
     subscribeToGraph(graph => graphSettings.setAxisNames(graph.xAxisName, graph.yAxisName));
+    subscribeToGraph(graph => dataTable.setAxisNames(graph.xAxisName, graph.yAxisName));
     updateGraph();
   </script>
 </body>
