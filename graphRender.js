@@ -1,5 +1,6 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CHART = { width: 800, height: 400, margin: { top: 52, right: 32, bottom: 76, left: 92 } };
+let clipIdCounter = 0;
 
 /**
  * Chooses a simple number to put between each pair of tick marks.
@@ -142,6 +143,12 @@ function prepareChart(graph, container, title) {
   const range = graph.range && typeof graph.range === "object" ? graph.range : {};
   const xBounds = calculateBounds(points, "x", range.xMin, range.xMax);
   const yBounds = calculateBounds(points, "y", range.yMin, range.yMax);
+
+  const visiblePoints = points.filter(p =>
+    p.x >= xBounds.min && p.x <= xBounds.max &&
+    p.y >= yBounds.min && p.y <= yBounds.max
+  );
+
   const scaleX = createScale(xBounds.min, xBounds.max, margin.left, width - margin.right);
   const scaleY = createScale(yBounds.min, yBounds.max, margin.top, height - margin.bottom, true);
   const svg = svgElement("svg", {
@@ -153,7 +160,7 @@ function prepareChart(graph, container, title) {
 
   if (graph.title) addText(svg, graph.title, width / 2, 30, { "text-anchor": "middle", class: "chart-title" });
   drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph);
-  return { svg, points, scaleX, scaleY };
+  return { svg, points: visiblePoints, allPoints: points, scaleX, scaleY };
 }
 
 function drawPoints(svg, points, scaleX, scaleY, graph) {
@@ -189,16 +196,33 @@ function renderLineChart(graph, container) {
   const chart = prepareChart(graph, container, "Line graph");
   if (!chart) return;
 
-  // Sort a copy, keeping the original graph state order intact.
-  const sortedPoints = [...chart.points].sort((a, b) => a.x - b.x);
-  if (sortedPoints.length > 1) {
-    const coordinates = sortedPoints
+  const allSorted = [...chart.allPoints].sort((a, b) => a.x - b.x);
+  if (allSorted.length > 1) {
+    const { width, height, margin } = CHART;
+    const clipId = `line-clip-${++clipIdCounter}`;
+
+    const clipPath = svgElement("clipPath", { id: clipId });
+    clipPath.appendChild(svgElement("rect", {
+      x: margin.left,
+      y: margin.top,
+      width: width - margin.left - margin.right,
+      height: height - margin.top - margin.bottom,
+    }));
+    chart.svg.appendChild(clipPath);
+
+    const coordinates = allSorted
       .map(point => `${chart.scaleX(point.x)},${chart.scaleY(point.y)}`)
       .join(" ");
     chart.svg.appendChild(svgElement("polyline", {
-      points: coordinates, class: "data-line", stroke: graph.lineColor || "var(--color-ink, #000000)"
+      points: coordinates,
+      class: "data-line",
+      stroke: graph.lineColor || "var(--color-ink, #000000)",
+      "clip-path": `url(#${clipId})`,
     }));
   }
+
+  // Dots: only the ones inside the range, sorted for consistency.
+  const sortedPoints = [...chart.points].sort((a, b) => a.x - b.x);
   drawPoints(chart.svg, sortedPoints, chart.scaleX, chart.scaleY, graph);
   container.replaceChildren(chart.svg);
 }
