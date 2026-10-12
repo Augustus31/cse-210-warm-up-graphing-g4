@@ -47,7 +47,7 @@
       };
     }
 
-    document.getElementById('graph-settings').append(GraphSettings({
+    const graphSettings = GraphSettings({
       onPlotTypeChange: saveToGraph('type'),
       onTitleChange: saveToGraph('title'),
       onPointColorChange: saveToGraph('pointColor'),
@@ -63,18 +63,22 @@
       onSave() {
         //export the graph (if we have time for this, if not imma just delete the button)
       },
-    }));
+    });
+    document.getElementById('graph-settings').append(graphSettings);
 
-    document.getElementById('data-table').append(DataTable({
+    const dataTable = DataTable({
       onPointsChange(points) {
         csvLoader.cancel();
         setGraphValue('points', points);
       },
-    }));
+    });
+    document.getElementById('data-table').append(dataTable);
 
     document.querySelector('[name="csv"]').closest('.settings-column').append(csvStatus);
     const chart = document.getElementById('chart');
     subscribeToGraph(graph => renderGraph(graph, chart));
+    subscribeToGraph(graph => dataTable.setPoints(graph.points));
+    subscribeToGraph(graph => graphSettings.setAxisNames(graph.xAxisName, graph.yAxisName));
     updateGraph();
   </script>
 </body>

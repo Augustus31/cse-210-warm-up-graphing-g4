@@ -31,6 +31,7 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
     for (const axis of ['X', 'Y']) {
       row.insertCell().append(createNumberInput(axis, rowNumber));
     }
+    return row;
   }
 
   // Read every valid row-pair into a list
@@ -41,6 +42,22 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
       .map(([xInput, yInput]) => ({ x: Number(xInput.value), y: Number(yInput.value) }))
       .filter(point => Number.isFinite(point.x) && Number.isFinite(point.y));
   }
+
+  // Checking if two lists of points have the same points
+  function samePoints(a, b) {
+    return a.length === b.length && a.every((point, i) => point.x === b[i].x && point.y === b[i].y);
+  }
+
+  // rebuild data table from points only when they differ from the current ppoits
+  dataTable.setPoints = function (points) {
+    if (samePoints(points, readPoints())) return;
+    tableBody.replaceChildren();
+    for (const point of points) {
+      const [xInput, yInput] = addRow().querySelectorAll('input');
+      xInput.value = point.x;
+      yInput.value = point.y;
+    }
+  };
 
   for (let i = 0; i < startingRowCount; i++) addRow();
   dataTable.querySelector('.add-row').addEventListener('click', addRow);

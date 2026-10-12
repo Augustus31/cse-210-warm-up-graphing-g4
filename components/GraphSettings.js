@@ -88,6 +88,12 @@ function AxesSettings({
   getInput('x-name').addEventListener('input', event => onXAxisNameChange(event.target.value));
   getInput('y-name').addEventListener('input', event => onYAxisNameChange(event.target.value));
 
+  // Show axis names set from csv
+  column.setAxisNames = function (xName, yName) {
+    if (getInput('x-name').value !== xName) getInput('x-name').value = xName;
+    if (getInput('y-name').value !== yName) getInput('y-name').value = yName;
+  };
+
   // Report all four together; an empty box means "auto" (null)
   const readNumberOrNull = name => (getInput(name).value === '' ? null : Number(getInput(name).value));
   for (const name of ['x-min', 'x-max', 'y-min', 'y-max']) {
@@ -107,11 +113,12 @@ export function GraphSettings(callbacks = {}) {
 
   const columns = document.createElement('div');
   columns.className = 'settings-columns';
+  const axesSettings = AxesSettings(callbacks);
   columns.append(
     PlotSettings(callbacks),
     DataSettings(callbacks),
     StyleSettings(callbacks),
-    AxesSettings(callbacks),
+    axesSettings,
   );
 
   const saveButton = document.createElement('button');
@@ -121,5 +128,6 @@ export function GraphSettings(callbacks = {}) {
   saveButton.addEventListener('click', () => (callbacks.onSave ?? doNothing)());
 
   graphSettings.append(columns, saveButton);
+  graphSettings.setAxisNames = axesSettings.setAxisNames;
   return graphSettings;
 }
