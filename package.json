@@ -4,6 +4,7 @@
   "private": true,
   "description": "A graphing tool for CSE 210.",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   }
 }

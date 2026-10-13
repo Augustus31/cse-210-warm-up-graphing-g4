@@ -36,6 +36,7 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
     <button type="button" class="add-row">Add row</button>
   `;
   const tableBody = dataTable.querySelector('tbody');
+  const [xHeader, yHeader] = dataTable.querySelectorAll('th');
 
   function addRow() {
     const rowNumber = tableBody.rows.length + 1;
@@ -43,6 +44,7 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
     for (const axis of ['X', 'Y']) {
       row.insertCell().append(createNumberInput(axis, rowNumber));
     }
+    return row;
   }
 
   // Read every valid row-pair into a list
@@ -53,6 +55,28 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
       .map(([xInput, yInput]) => ({ x: Number(xInput.value), y: Number(yInput.value) }))
       .filter(point => Number.isFinite(point.x) && Number.isFinite(point.y));
   }
+
+  // Checking if two lists of points have the same points
+  function samePoints(a, b) {
+    return a.length === b.length && a.every((point, i) => point.x === b[i].x && point.y === b[i].y);
+  }
+
+  // rebuild data table from points only when they differ from the current ppoits
+  dataTable.setPoints = function (points) {
+    if (samePoints(points, readPoints())) return;
+    tableBody.replaceChildren();
+    for (const point of points) {
+      const [xInput, yInput] = addRow().querySelectorAll('input');
+      xInput.value = point.x;
+      yInput.value = point.y;
+    }
+  };
+
+  // Column headers show the axis names or "X axis" / "Y axis" if empty
+  dataTable.setAxisNames = function (xName, yName) {
+    xHeader.textContent = xName || 'X axis';
+    yHeader.textContent = yName || 'Y axis';
+  };
 
   for (let i = 0; i < startingRowCount; i++) addRow();
   dataTable.querySelector('.add-row').addEventListener('click', addRow);
