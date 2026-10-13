@@ -37,9 +37,10 @@ x,y
     <hr>
     <div id="chart" class="chart"></div>
     <script src="data_processer.js"></script>
-    <script src="graph.js"></script>
 
-    <script>
+    <script type="module">
+        import { renderGraph } from "./graphRender.js";
+
         let csvData = null;
         const fileInput = document.getElementById("csvFile");
         const csvMessage = document.getElementById("csvMessage");
@@ -79,7 +80,7 @@ x,y
                     return;
                 }
 
-                renderScatterPlot(csvData, chart);
+                renderGraph({ type: "scatter", points: csvData }, chart);
             });
         // when button is clicked, render the line plot using CSV data (this is not the text box button)
         document.getElementById("csvLineButton")
@@ -90,7 +91,7 @@ x,y
                         "Please load a valid CSV first.";
                     return;
                 }
-                renderLineChart(csvData, chart);
+                renderGraph({ type: "line", points: csvData }, chart);
             });
         // when button is clicked, render the scatter plot using text box data
         document.getElementById("textScatterButton")
@@ -107,7 +108,7 @@ x,y
                     `Loaded ${result.data.length} points. ` +
                     `X: ${result.headers.x}, Y: ${result.headers.y}` +
                     result.warnings.map(warning => ` Warning: ${warning}`).join("");
-                renderScatterPlot(result.data, chart);
+                renderGraph({ type: "scatter", points: result.data }, chart);
             });
         // when button is clicked, render the line plot using text box data
         document.getElementById("textLineButton")
@@ -125,7 +126,7 @@ x,y
                     `Loaded ${result.data.length} points. ` +
                     `X: ${result.headers.x}, Y: ${result.headers.y}` +
                     result.warnings.map(warning => ` Warning: ${warning}`).join("");
-                renderLineChart(result.data, chart);
+                renderGraph({ type: "line", points: result.data }, chart);
             });
     </script>
 </body>
