@@ -168,7 +168,7 @@ export function GraphSettings(callbacks = {}) {
   saveButton.textContent = 'Save';
   saveButton.addEventListener('click', () => (callbacks.onSave ?? doNothing)());
 
-  graphSettings.append(columns, saveButton);
+  graphSettings.append(columns, /*saveButton*/);
   graphSettings.setAxisNames = axesSettings.setAxisNames;
   return graphSettings;
 }
