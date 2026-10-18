@@ -20,7 +20,20 @@
 
   <main>
     <aside class="panel" id="data-table"></aside>
-    <section class="panel" id="chart"></section>
+    <section class="panel chart-panel" aria-label="Graph preview">
+      <div class="chart-toolbar">
+        <span class="chart-toolbar-title">Graph</span>
+        <label for="export-format">Format</label>
+        <select id="export-format">
+          <option value="jpeg">JPEG</option>
+          <option value="png">PNG</option>
+          <option value="svg">SVG</option>
+        </select>
+        <button type="button" id="save-graph">Save graph</button>
+      </div>
+      <div id="chart"></div>
+      <p id="save-status" role="status" aria-live="polite"></p>
+    </section>
     <section class="panel bottom-area" id="graph-settings"></section>
   </main>
   <script src="data_processer.js"></script>
@@ -30,6 +43,7 @@
     import { DataTable } from './components/DataTable.js';
     import { setGraphValue, subscribeToGraph, updateGraph } from './graphState.js';
     import { renderGraph } from './graphRender.js';
+    import { saveGraph } from './graphExport.js';
 
     const csvStatus = document.createElement('p');
     csvStatus.id = 'csv-status';
@@ -60,9 +74,6 @@
       onCsvLoad(file) {
         return csvLoader.load(file);
       },
-      onSave() {
-        //export the graph (if we have time for this, if not imma just delete the button)
-      },
     });
     document.getElementById('graph-settings').append(graphSettings);
 
@@ -76,7 +87,29 @@
 
     document.querySelector('[name="csv"]').closest('.settings-column').append(csvStatus);
     const chart = document.getElementById('chart');
-    subscribeToGraph(graph => renderGraph(graph, chart));
+    const saveButton = document.getElementById('save-graph');
+    const formatSelect = document.getElementById('export-format');
+    const saveStatus = document.getElementById('save-status');
+    saveButton.addEventListener('click', async () => {
+      saveButton.disabled = true;
+      formatSelect.disabled = true;
+      saveStatus.textContent = 'Preparing download…';
+      try {
+        const filename = await saveGraph(chart, formatSelect.value);
+        saveStatus.textContent = `Download started: ${filename}`;
+      } catch (error) {
+        saveStatus.textContent = chart.querySelector('svg')
+          ? 'Unable to save the graph. Please try again.'
+          : error.message;
+      } finally {
+        saveButton.disabled = false;
+        formatSelect.disabled = false;
+      }
+    });
+    subscribeToGraph(graph => {
+      renderGraph(graph, chart);
+      if (!saveButton.disabled) saveStatus.textContent = '';
+    });
     subscribeToGraph(graph => dataTable.setPoints(graph.points));
     subscribeToGraph(graph => graphSettings.setAxisNames(graph.xAxisName, graph.yAxisName));
     subscribeToGraph(graph => dataTable.setAxisNames(graph.xAxisName, graph.yAxisName));

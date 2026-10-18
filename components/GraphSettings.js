@@ -144,7 +144,7 @@ function AxesSettings({
 }
 
 /**
- * Renders the full GraphSettings component containing all settings columns and a save button.
+ * Renders the full GraphSettings component containing all settings columns.
  * @param {Object} [callbacks={}] - Object containing callback handlers for all settings actions.
  * @returns {HTMLDivElement} The constructed DOM container.
  */
@@ -162,13 +162,7 @@ export function GraphSettings(callbacks = {}) {
     axesSettings,
   );
 
-  const saveButton = document.createElement('button');
-  saveButton.type = 'button';
-  saveButton.className = 'save-button';
-  saveButton.textContent = 'Save';
-  saveButton.addEventListener('click', () => (callbacks.onSave ?? doNothing)());
-
-  graphSettings.append(columns, /*saveButton*/);
+  graphSettings.append(columns);
   graphSettings.setAxisNames = axesSettings.setAxisNames;
   return graphSettings;
 }
