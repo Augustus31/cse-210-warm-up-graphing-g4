@@ -132,6 +132,7 @@ test('publishes numeric points and headers while preserving plotting settings', 
   const settings = {
     type: 'scatter', title: 'My chart', pointColor: '#123456',
     lineColor: '#abcdef', axesColor: '#654321', pointStyle: 'square',
+    backgroundColor: '#aabbcc', transparentBackground: true,
     range: { xMin: -10, xMax: 10, yMin: null, yMax: 100 },
   };
   for (const [key, value] of Object.entries(settings)) graphState.setGraphValue(key, value);
@@ -146,6 +147,7 @@ test('publishes numeric points and headers while preserving plotting settings', 
   assert.deepEqual(Object.keys(graph).sort(), [
     'points', 'type', 'title', 'pointColor', 'lineColor', 'axesColor',
     'pointStyle', 'xAxisName', 'yAxisName', 'range',
+    'backgroundColor', 'transparentBackground',
   ].sort());
 });
 

@@ -29,7 +29,8 @@
           <option value="png">PNG</option>
           <option value="svg">SVG</option>
         </select>
-        <button type="button" id="save-graph">Save graph</button>
+        <button type="button" id="save-graph" aria-describedby="export-hint">Save graph</button>
+        <span id="export-hint" role="status" hidden>JPEG uses a white background when transparent.</span>
       </div>
       <div id="chart"></div>
       <p id="save-status" role="status" aria-live="polite"></p>
@@ -67,6 +68,8 @@
       onPointColorChange: saveToGraph('pointColor'),
       onLineColorChange: saveToGraph('lineColor'),
       onAxesColorChange: saveToGraph('axesColor'),
+      onBackgroundColorChange: saveToGraph('backgroundColor'),
+      onTransparentBackgroundChange: saveToGraph('transparentBackground'),
       onPointStyleChange: saveToGraph('pointStyle'),
       onXAxisNameChange: saveToGraph('xAxisName'),
       onYAxisNameChange: saveToGraph('yAxisName'),
@@ -90,6 +93,12 @@
     const saveButton = document.getElementById('save-graph');
     const formatSelect = document.getElementById('export-format');
     const saveStatus = document.getElementById('save-status');
+    const exportHint = document.getElementById('export-hint');
+    let transparentBackground = false;
+    function updateExportHint() {
+      exportHint.hidden = !(transparentBackground && formatSelect.value === 'jpeg');
+    }
+    formatSelect.addEventListener('change', updateExportHint);
     saveButton.addEventListener('click', async () => {
       saveButton.disabled = true;
       formatSelect.disabled = true;
@@ -108,6 +117,8 @@
     });
     subscribeToGraph(graph => {
       renderGraph(graph, chart);
+      transparentBackground = graph.transparentBackground;
+      updateExportHint();
       if (!saveButton.disabled) saveStatus.textContent = '';
     });
     subscribeToGraph(graph => dataTable.setPoints(graph.points));

@@ -27,7 +27,7 @@ function makeElement(tag, computed) {
   node.style.owner = node;
   return node;
 }
-function setup({ empty = false, failClick = false, title = 'Temperature & Time', failImage = false, failEncode = false } = {}) {
+function setup({ empty = false, failClick = false, title = 'Temperature & Time', failImage = false, failEncode = false, backgroundColor = '#ffffff', transparent = false } = {}) {
   const svg = makeElement('svg');
   svg.viewBox = { baseVal: { x: 0, y: 0, width: 800, height: 400 } };
   svg.setAttribute('viewBox', '0 0 800 400');
@@ -35,7 +35,10 @@ function setup({ empty = false, failClick = false, title = 'Temperature & Time',
   label.textContent = title;
   const line = makeElement('polyline', { fill: 'none', stroke: 'rgb(255, 0, 0)', 'stroke-width': '3.5px' });
   line.setAttribute('clip-path', 'url(#line-clip-1)');
-  svg.children = [label, line];
+  const background = makeElement('rect', { fill: backgroundColor });
+  background.setAttribute('fill', backgroundColor);
+  background.setAttribute('class', 'chart-background');
+  svg.children = transparent ? [label, line] : [background, label, line];
   const record = { urls: [], revoked: [], removed: 0, clicked: 0, timers: [] };
   const context = {
     Blob,
@@ -83,15 +86,15 @@ test('export includes standalone dimensions, background, styles and clipping wit
   assert.equal(copy.attributes.width, 800);
   assert.equal(copy.attributes.height, 400);
   assert.equal(copy.attributes.viewBox, '0 0 800 400');
-  assert.equal(copy.children[0].attributes.fill, '#fff');
+  assert.equal(copy.children[0].attributes.fill, '#ffffff');
   assert.equal(copy.children[1].textContent, 'Temperature & Time');
   assert.equal(copy.children[1].styles['font-size'], '28px');
   assert.equal(copy.children[2].styles.fill, 'none');
   assert.equal(copy.children[2].styles.stroke, 'rgb(255, 0, 0)');
   assert.equal(copy.children[2].styles['stroke-width'], '3.5px');
   assert.equal(copy.children[2].attributes['clip-path'], 'url(#line-clip-1)');
-  assert.equal(svg.children.length, 2);
-  assert.deepEqual(svg.children[1].styles, {});
+  assert.equal(svg.children.length, 3);
+  assert.deepEqual(svg.children[2].styles, {});
 });
 
 test('downloads latest title with a safe filename and releases resources after the click', async () => {
@@ -129,7 +132,8 @@ for (const format of ['jpeg', 'png']) {
     const extension = format === 'jpeg' ? 'jpg' : format;
     assert.equal(await saveGraph(container, format), `Temperature & Time.${extension}`);
     assert.equal(record.urls[1].type, `image/${format}`);
-    assert.deepEqual(record.background, [0, 0, 1600, 800]);
+    if (format === 'jpeg') assert.deepEqual(record.background, [0, 0, 1600, 800]);
+    else assert.equal(record.background, undefined);
     assert.deepEqual(record.draw, [0, 0, 1600, 800]);
     assert.equal(record.clicked, 1);
     assert.equal(record.revoked.length, 1);
@@ -152,3 +156,20 @@ test('unsupported formats are rejected before creating a file', async () => {
   await assert.rejects(saveGraph(container, 'pdf'), /Unsupported/);
   assert.equal(record.urls.length, 0);
 });
+
+
+test('SVG export keeps the chosen background color', () => {
+  const { serializeGraph, svg, record } = setup({ backgroundColor: '#aabbcc' });
+  serializeGraph(svg);
+  assert.equal(record.serialized.children[0].styles.fill, '#aabbcc');
+});
+
+for (const format of ['svg', 'png', 'jpeg']) {
+  test(`${format} transparent export only adds a white underlay for JPEG`, async () => {
+    const { saveGraph, container, record } = setup({ transparent: true });
+    await saveGraph(container, format);
+    assert.equal(record.serialized.children.some(child => child.tag === 'rect'), false);
+    if (format === 'jpeg') assert.deepEqual(record.background, [0, 0, 1600, 800]);
+    else assert.equal(record.background, undefined);
+  });
+}

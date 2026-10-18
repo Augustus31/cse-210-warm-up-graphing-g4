@@ -20,15 +20,10 @@ export function serializeGraph(svg) {
     copies[index].style.setProperty('font-family', 'Georgia, serif');
   });
 
-  const { x, y, width, height } = svg.viewBox.baseVal;
+  const { width, height } = svg.viewBox.baseVal;
   copy.setAttribute('xmlns', SVG_NS);
   copy.setAttribute('width', width);
   copy.setAttribute('height', height);
-  const background = document.createElementNS(SVG_NS, 'rect');
-  for (const [key, value] of Object.entries({ x, y, width, height, fill: '#fff' })) {
-    background.setAttribute(key, value);
-  }
-  copy.prepend(background);
   return new XMLSerializer().serializeToString(copy);
 }
 
@@ -48,8 +43,10 @@ async function toRaster(svgBlob, width, height, format) {
     canvas.height = height * 2;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Image export is not available.');
-    context.fillStyle = '#fff';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    if (format === 'jpeg') {
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     return await new Promise((resolve, reject) => {
       canvas.toBlob(blob => {
