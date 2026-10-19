@@ -67,6 +67,8 @@ function DataSettings({ onCsvLoad = doNothing }) {
  * @param {Function} [options.onPointColorChange=doNothing] - Callback triggered when the point color value changes.
  * @param {Function} [options.onLineColorChange=doNothing] - Callback triggered when the line color value changes.
  * @param {Function} [options.onAxesColorChange=doNothing] - Callback triggered when the axes color value changes.
+ * @param {function(string): void} [options.onBackgroundColorChange=doNothing] - Receives the selected background color as a hexadecimal string.
+ * @param {function(boolean): void} [options.onTransparentBackgroundChange=doNothing] - Receives whether the background is transparent.
  * @param {Function} [options.onPointStyleChange=doNothing] - Callback triggered when the point shape/style selection changes.
  * @returns {HTMLFieldSetElement} The constructed DOM.
  */

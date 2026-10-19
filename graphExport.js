@@ -5,6 +5,13 @@ const STYLE_PROPERTIES = [
   'font-style', 'text-anchor', 'opacity',
 ];
 
+/**
+ * Serializes a clone of the rendered graph with inline styles and explicit dimensions.
+ * Leaves the original SVG unchanged and uses Georgia as an offline font fallback.
+ * @param {SVGSVGElement} svg - Rendered graph SVG with a valid viewBox.
+ * @returns {string} Serialized SVG XML suitable for an image/svg+xml Blob.
+ * @throws {Error} If no SVG is provided.
+ */
 export function serializeGraph(svg) {
   if (!svg) throw new Error('Add at least one complete X/Y pair before saving.');
 
@@ -27,6 +34,14 @@ export function serializeGraph(svg) {
   return new XMLSerializer().serializeToString(copy);
 }
 
+/**
+ * Rasterizes an SVG at twice its source dimensions, using a white underlay for JPEG.
+ * @param {Blob} svgBlob - Serialized SVG image to render.
+ * @param {number} width - Source SVG width in pixels.
+ * @param {number} height - Source SVG height in pixels.
+ * @param {'jpeg'|'png'} format - Output image format; PNG preserves transparency.
+ * @returns {Promise<Blob>} Encoded image; rejects if rendering or encoding fails.
+ */
 async function toRaster(svgBlob, width, height, format) {
   const mimeType = `image/${format}`;
   const url = URL.createObjectURL(svgBlob);
@@ -59,6 +74,15 @@ async function toRaster(svgBlob, width, height, format) {
   }
 }
 
+/**
+ * Exports the container's first SVG and starts a browser download.
+ * Uses a sanitized chart title (or "graph") as the filename, with .jpg for JPEG.
+ * @param {Element} container - Graph preview container containing the rendered SVG.
+ * @param {'svg'|'jpeg'|'png'} [format='svg'] - Image format to download.
+ * @returns {Promise<string>} Filename after triggering the download, not confirmation
+ * of a completed disk save. Rejects for an unsupported format, missing SVG, or
+ * export failure.
+ */
 export async function saveGraph(container, format = 'svg') {
   if (!['svg', 'jpeg', 'png'].includes(format)) throw new Error('Unsupported image format.');
   const svg = container.querySelector('svg');
