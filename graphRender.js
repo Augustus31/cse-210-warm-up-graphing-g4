@@ -92,36 +92,36 @@ function formatTick(value) {
 /**
  * Draws light grid lines at every axis tick so the grid matches the tick labels exactly.
  * Call before drawing the axes and points so the grid sits behind them.
- * @param {SVGSVGElement} elSvg The chart SVG.
- * @param {{ticks: number[]}} objXBounds Bounds and tick values for the x axis.
- * @param {{ticks: number[]}} objYBounds Bounds and tick values for the y axis.
- * @param {(value: number) => number} fnScaleX Turns an x value into an SVG x position.
- * @param {(value: number) => number} fnScaleY Turns a y value into an SVG y position.
- * @param {Object} objGraph Graph settings from graphState.js.
+ * @param {SVGSVGElement} svg The chart SVG.
+ * @param {{ticks: number[]}} xBounds Bounds and tick values for the x axis.
+ * @param {{ticks: number[]}} yBounds Bounds and tick values for the y axis.
+ * @param {(value: number) => number} scaleX Turns an x value into an SVG x position.
+ * @param {(value: number) => number} scaleY Turns a y value into an SVG y position.
+ * @param {Object} graph Graph settings from graphState.js.
  */
-function drawGrid(elSvg, objXBounds, objYBounds, fnScaleX, fnScaleY, objGraph) {
-  if (!objGraph.showGrid) return;
-  const { width: numWidth, height: numHeight, margin: objMargin } = CHART;
-  const numLeft = objMargin.left;
-  const numRight = numWidth - objMargin.right;
-  const numTop = objMargin.top;
-  const numBottom = numHeight - objMargin.bottom;
-  const strGridColor = objGraph.axesColor || "var(--color-ink, #000000)";
-  const elGroup = svgElement("g", { class: "chart-grid", "aria-hidden": "true" });
+function drawGrid(svg, xBounds, yBounds, scaleX, scaleY, graph) {
+  if (!graph.showGrid) return;
+  const { width, height, margin } = CHART;
+  const left = margin.left;
+  const right = width - margin.right;
+  const top = margin.top;
+  const bottom = height - margin.bottom;
+  const axesColor = graph.axesColor || "var(--color-ink, #000000)";
+  const group = svgElement("g", { class: "chart-grid", "aria-hidden": "true" });
 
-  for (const numTick of objXBounds.ticks) {
-    const numX = fnScaleX(numTick);
-    elGroup.appendChild(svgElement("line", {
-      x1: numX, y1: numTop, x2: numX, y2: numBottom, stroke: strGridColor, class: "grid-line"
+  for (const tick of xBounds.ticks) {
+    const x = scaleX(tick);
+    group.appendChild(svgElement("line", {
+      x1: x, y1: top, x2: x, y2: bottom, stroke: axesColor, class: "grid-line"
     }));
   }
-  for (const numTick of objYBounds.ticks) {
-    const numY = fnScaleY(numTick);
-    elGroup.appendChild(svgElement("line", {
-      x1: numLeft, y1: numY, x2: numRight, y2: numY, stroke: strGridColor, class: "grid-line"
+  for (const tick of yBounds.ticks) {
+    const y = scaleY(tick);
+    group.appendChild(svgElement("line", {
+      x1: left, y1: y, x2: right, y2: y, stroke: axesColor, class: "grid-line"
     }));
   }
-  elSvg.appendChild(elGroup);
+  svg.appendChild(group);
 }
 
 // Preserve the shared axes and scale behavior used by the existing renderer.
