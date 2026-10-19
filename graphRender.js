@@ -89,6 +89,41 @@ function formatTick(value) {
   return Number(value.toPrecision(6)).toString();
 }
 
+/**
+ * Draws light grid lines at every axis tick so the grid matches the tick labels exactly.
+ * Call before drawing the axes and points so the grid sits behind them.
+ * @param {SVGSVGElement} elSvg The chart SVG.
+ * @param {{ticks: number[]}} objXBounds Bounds and tick values for the x axis.
+ * @param {{ticks: number[]}} objYBounds Bounds and tick values for the y axis.
+ * @param {(value: number) => number} fnScaleX Turns an x value into an SVG x position.
+ * @param {(value: number) => number} fnScaleY Turns a y value into an SVG y position.
+ * @param {Object} objGraph Graph settings from graphState.js.
+ */
+function drawGrid(elSvg, objXBounds, objYBounds, fnScaleX, fnScaleY, objGraph) {
+  if (!objGraph.showGrid) return;
+  const { width: numWidth, height: numHeight, margin: objMargin } = CHART;
+  const numLeft = objMargin.left;
+  const numRight = numWidth - objMargin.right;
+  const numTop = objMargin.top;
+  const numBottom = numHeight - objMargin.bottom;
+  const strGridColor = objGraph.axesColor || "var(--color-ink, #000000)";
+  const elGroup = svgElement("g", { class: "chart-grid", "aria-hidden": "true" });
+
+  for (const numTick of objXBounds.ticks) {
+    const numX = fnScaleX(numTick);
+    elGroup.appendChild(svgElement("line", {
+      x1: numX, y1: numTop, x2: numX, y2: numBottom, stroke: strGridColor, class: "grid-line"
+    }));
+  }
+  for (const numTick of objYBounds.ticks) {
+    const numY = fnScaleY(numTick);
+    elGroup.appendChild(svgElement("line", {
+      x1: numLeft, y1: numY, x2: numRight, y2: numY, stroke: strGridColor, class: "grid-line"
+    }));
+  }
+  elSvg.appendChild(elGroup);
+}
+
 // Preserve the shared axes and scale behavior used by the existing renderer.
 /** Draws both axes, their ticks, and the configured axis labels. */
 function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph) {
@@ -167,6 +202,7 @@ function prepareChart(graph, container, title) {
     }));
   }
   if (graph.title) addText(svg, graph.title, width / 2, 30, { "text-anchor": "middle", class: "chart-title" });
+  drawGrid(svg, xBounds, yBounds, scaleX, scaleY, graph);
   drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph);
   return { svg, points: visiblePoints, allPoints: points, scaleX, scaleY };
 }
