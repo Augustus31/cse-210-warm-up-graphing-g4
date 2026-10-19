@@ -83,18 +83,24 @@ test('grid lines span the whole plot area', () => {
 });
 
 test('grid lines match the tick labels when the range is automatic', () => {
-  // Data starting at 0 would pad the range below 0 and move the axes to the
-  // origin, which merges the two 0 labels, so keep the data above 0 here.
-  const { svg, grid } = render({ showGrid: true, points: [{ x: 1, y: 1 }, { x: 10, y: 10 }] });
+  const { svg, grid } = render({ showGrid: true });
   const labels = findAll(svg, node => node.attributes.class === 'tick-label');
+  // The data starts at 0, so the padded range dips below 0 and the axes cross at
+  // the origin. Both 0 ticks then share one "0" label there instead of one each.
+  const originLabels = labels.filter(node => node.textContent === '0');
+  assert.equal(originLabels.length, 1);
+  const { xAxis, yAxis } = axisLines(svg);
   const tickX = labels.filter(node => node.attributes['text-anchor'] === 'middle')
-    .map(node => node.attributes.x);
+    .map(node => node.attributes.x)
+    .concat(yAxis.x1);
   // Y labels are drawn 4px below their tick so the text is vertically centred.
-  const tickY = labels.filter(node => node.attributes['text-anchor'] === 'end')
-    .map(node => node.attributes.y - 4);
+  const tickY = labels.filter(node => node.attributes['text-anchor'] === 'end' && node !== originLabels[0])
+    .map(node => node.attributes.y - 4)
+    .concat(xAxis.y1);
   const lines = gridLines(grid);
-  assert.deepEqual(lines.filter(isVertical).map(node => node.attributes.x1), tickX);
-  assert.deepEqual(lines.filter(node => !isVertical(node)).map(node => node.attributes.y1), tickY);
+  const sorted = values => [...values].sort((a, b) => a - b);
+  assert.deepEqual(sorted(lines.filter(isVertical).map(node => node.attributes.x1)), sorted(tickX));
+  assert.deepEqual(sorted(lines.filter(node => !isVertical(node)).map(node => node.attributes.y1)), sorted(tickY));
 });
 
 test('grid realigns when the axis range changes', () => {
