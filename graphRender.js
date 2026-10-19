@@ -127,6 +127,8 @@ function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph) {
 /** Filters input points and prepares the SVG, scales, and axes. */
 function prepareChart(graph, container, title) {
   if (!container || typeof container.replaceChildren !== "function") return null;
+  container.classList.toggle('transparent-background', Boolean(graph.transparentBackground));
+  container.style.backgroundColor = graph.transparentBackground ? 'transparent' : (graph.backgroundColor || '#ffffff');
   const points = Array.isArray(graph.points)
     ? graph.points.filter(point => point && Number.isFinite(point.x) && Number.isFinite(point.y))
     : [];
@@ -158,6 +160,12 @@ function prepareChart(graph, container, title) {
     "aria-label": graph.title || title
   });
 
+  if (!graph.transparentBackground) {
+    svg.appendChild(svgElement('rect', {
+      x: 0, y: 0, width, height,
+      fill: graph.backgroundColor || '#ffffff', class: 'chart-background',
+    }));
+  }
   if (graph.title) addText(svg, graph.title, width / 2, 30, { "text-anchor": "middle", class: "chart-title" });
   drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph);
   return { svg, points: visiblePoints, allPoints: points, scaleX, scaleY };

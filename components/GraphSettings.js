@@ -67,6 +67,8 @@ function DataSettings({ onCsvLoad = doNothing }) {
  * @param {Function} [options.onPointColorChange=doNothing] - Callback triggered when the point color value changes.
  * @param {Function} [options.onLineColorChange=doNothing] - Callback triggered when the line color value changes.
  * @param {Function} [options.onAxesColorChange=doNothing] - Callback triggered when the axes color value changes.
+ * @param {function(string): void} [options.onBackgroundColorChange=doNothing] - Receives the selected background color as a hexadecimal string.
+ * @param {function(boolean): void} [options.onTransparentBackgroundChange=doNothing] - Receives whether the background is transparent.
  * @param {Function} [options.onPointStyleChange=doNothing] - Callback triggered when the point shape/style selection changes.
  * @returns {HTMLFieldSetElement} The constructed DOM.
  */
@@ -74,12 +76,16 @@ function StyleSettings({
   onPointColorChange = doNothing,
   onLineColorChange = doNothing,
   onAxesColorChange = doNothing,
+  onBackgroundColorChange = doNothing,
+  onTransparentBackgroundChange = doNothing,
   onPointStyleChange = doNothing,
 }) {
   const column = createSettingsColumn('Style', `
     <label class="color-row">Point color <input type="color" name="point-color" value="#000000"></label>
     <label class="color-row">Line color <input type="color" name="line-color" value="#000000"></label>
     <label class="color-row">Axes color <input type="color" name="axes-color" value="#000000"></label>
+    <label class="color-row">Background color <input type="color" name="background-color" value="#ffffff"></label>
+    <label class="checkbox-row"><input type="checkbox" name="transparent-background"> Transparent background</label>
     <label>Point style
       <select name="point-style">
         <option value="circle">Circle</option>
@@ -93,6 +99,11 @@ function StyleSettings({
   getInput('point-color').addEventListener('input', event => onPointColorChange(event.target.value));
   getInput('line-color').addEventListener('input', event => onLineColorChange(event.target.value));
   getInput('axes-color').addEventListener('input', event => onAxesColorChange(event.target.value));
+  getInput('background-color').addEventListener('input', event => onBackgroundColorChange(event.target.value));
+  getInput('transparent-background').addEventListener('change', event => {
+    getInput('background-color').disabled = event.target.checked;
+    onTransparentBackgroundChange(event.target.checked);
+  });
   getInput('point-style').addEventListener('change', event => onPointStyleChange(event.target.value));
   return column;
 }
@@ -144,7 +155,7 @@ function AxesSettings({
 }
 
 /**
- * Renders the full GraphSettings component containing all settings columns and a save button.
+ * Renders the full GraphSettings component containing all settings columns.
  * @param {Object} [callbacks={}] - Object containing callback handlers for all settings actions.
  * @returns {HTMLDivElement} The constructed DOM container.
  */
@@ -162,13 +173,7 @@ export function GraphSettings(callbacks = {}) {
     axesSettings,
   );
 
-  const saveButton = document.createElement('button');
-  saveButton.type = 'button';
-  saveButton.className = 'save-button';
-  saveButton.textContent = 'Save';
-  saveButton.addEventListener('click', () => (callbacks.onSave ?? doNothing)());
-
-  graphSettings.append(columns, /*saveButton*/);
+  graphSettings.append(columns);
   graphSettings.setAxisNames = axesSettings.setAxisNames;
   return graphSettings;
 }

@@ -78,6 +78,8 @@ select {
 input:focus,
 select:focus { outline: none; box-shadow: var(--shadow); }
 input[type="radio"] { width: auto; accent-color: var(--color-ink); }
+input[type="checkbox"] { width: auto; accent-color: var(--color-ink); }
+input[type="color"]:disabled { opacity: 0.45; cursor: not-allowed; }
 input[type="color"] { width: 40px; height: 28px; padding: 0; }
 
 .data-table { height: 100%; display: flex; flex-direction: column; }
@@ -94,7 +96,21 @@ input[type="color"] { width: 40px; height: 28px; padding: 0; }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
-.save-button { align-self: flex-end; }
+/* Keep export controls next to the graph without covering its content. */
+.chart-panel { display: flex; flex-direction: column; min-height: 0; }
+.chart-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0; padding-bottom: 8px; }
+.chart-toolbar-title { font-weight: bold; margin-right: auto; }
+.chart-toolbar select { width: auto; }
+.chart-toolbar button { padding-inline: 16px; }
+.chart-toolbar button:disabled { cursor: wait; opacity: 0.6; }
+#chart { flex: 1; min-height: 0; }
+#chart.transparent-background {
+  background-image: conic-gradient(#eee 25%, #fff 0 50%, #eee 0 75%, #fff 0);
+  background-size: 20px 20px;
+}
+#export-hint { flex-basis: 100%; font-size: 14px; }
+#save-status { margin: 4px 0 0; font-size: 14px; overflow-wrap: anywhere; }
+#save-status:empty { display: none; }
 
 .settings-column {
   min-width: 0;
@@ -109,6 +125,7 @@ input[type="color"] { width: 40px; height: 28px; padding: 0; }
 .settings-column label { display: flex; flex-direction: column; gap: 2px; }
 .radio-row { display: flex; gap: 16px; }
 .radio-row label,
+label.checkbox-row,
 label.color-row { flex-direction: row; align-items: center; gap: 6px; }
 label.color-row { justify-content: space-between; }
 .range-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }

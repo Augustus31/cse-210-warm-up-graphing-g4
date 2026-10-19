@@ -6,6 +6,8 @@ const graph = {
   pointColor: '#000000',
   lineColor: '#000000',
   axesColor: '#000000',
+  backgroundColor: '#ffffff',
+  transparentBackground: false,
   pointStyle: 'circle',
   xAxisName: '',
   yAxisName: '',
