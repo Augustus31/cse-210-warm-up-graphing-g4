@@ -21,7 +21,7 @@ function findAll(node, match) {
   return found;
 }
 
-const { renderGraph } = (() => {
+const { renderGraph, axisCrossing } = (() => {
   const source = fs.readFileSync(path.join(__dirname, '../graphRender.js'), 'utf8');
   const context = {
     document: {
@@ -30,7 +30,7 @@ const { renderGraph } = (() => {
     },
   };
   return vm.runInNewContext(
-    source.replace(/export function /g, 'function ') + '\n({ renderGraph })', context);
+    source.replace(/export function /g, 'function ') + '\n({ renderGraph, axisCrossing })', context);
 })();
 
 const points = [{ x: 0, y: 0 }, { x: 10, y: 10 }];
@@ -83,7 +83,9 @@ test('grid lines span the whole plot area', () => {
 });
 
 test('grid lines match the tick labels when the range is automatic', () => {
-  const { svg, grid } = render({ showGrid: true });
+  // Data starting at 0 would pad the range below 0 and move the axes to the
+  // origin, which merges the two 0 labels, so keep the data above 0 here.
+  const { svg, grid } = render({ showGrid: true, points: [{ x: 1, y: 1 }, { x: 10, y: 10 }] });
   const labels = findAll(svg, node => node.attributes.class === 'tick-label');
   const tickX = labels.filter(node => node.attributes['text-anchor'] === 'middle')
     .map(node => node.attributes.x);
@@ -127,4 +129,51 @@ test('grid is drawn on a transparent background too', () => {
   const { svg, grid } = render({ showGrid: true, transparentBackground: true });
   assert.equal(svg.children.some(node => node.attributes.class === 'chart-background'), false);
   assert.ok(grid);
+});
+
+// The first two top-level lines are the x axis and the y axis (grid lines sit inside a group).
+function axisLines(svg) {
+  const [xAxis, yAxis] = svg.children.filter(node => node.tag === 'line');
+  return { xAxis: xAxis.attributes, yAxis: yAxis.attributes };
+}
+
+const tickLabels = svg => findAll(svg, node => node.attributes.class === 'tick-label')
+  .map(node => node.textContent);
+
+test('axes cross at 0 when 0 is in range', () => {
+  assert.equal(axisCrossing({ min: -10, max: 10 }), 0);
+  assert.equal(axisCrossing({ min: -10, max: 0 }), 0);
+  assert.equal(axisCrossing({ min: 0, max: 10 }), 0);
+});
+
+test('axes stay on the low edge when 0 is out of range', () => {
+  assert.equal(axisCrossing({ min: 2, max: 10 }), 2);
+  assert.equal(axisCrossing({ min: -10, max: -2 }), -10);
+});
+
+test('axes go through the origin for four-quadrant data', () => {
+  const { svg } = render({ points: [{ x: -5, y: -5 }, { x: 5, y: 5 }, { x: -5, y: 5 }, { x: 5, y: -5 }] });
+  const { xAxis, yAxis } = axisLines(svg);
+  // Symmetric data, so the origin is the centre of the plot area.
+  assert.equal(xAxis.y1, (52 + 324) / 2);
+  assert.equal(yAxis.x1, (92 + 768) / 2);
+  // 0 is labelled once at the origin instead of once per axis.
+  assert.equal(tickLabels(svg).filter(label => label === '0').length, 1);
+  assert.ok(tickLabels(svg).includes('-5'));
+});
+
+test('axes stay bottom and left when the range starts at 0', () => {
+  const { svg } = render({ type: 'line', range });
+  const { xAxis, yAxis } = axisLines(svg);
+  assert.equal(xAxis.y1, 324);
+  assert.equal(yAxis.x1, 92);
+});
+
+test('only the axis whose range contains 0 moves', () => {
+  const { svg } = render({ range: { xMin: -4, xMax: 4, yMin: 2, yMax: 6 } });
+  const { xAxis, yAxis } = axisLines(svg);
+  assert.equal(xAxis.y1, 324);
+  assert.equal(yAxis.x1, (92 + 768) / 2);
+  // The x axis is still on the edge, so its 0 label does not hit the y axis.
+  assert.ok(tickLabels(svg).includes('0'));
 });
