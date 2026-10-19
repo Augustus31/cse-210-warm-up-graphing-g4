@@ -149,3 +149,6 @@ vite.config.ts.timestamp-*
 .turbo
 
 .claude
+
+# Playwright
+test-results/
