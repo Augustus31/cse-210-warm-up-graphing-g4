@@ -3,7 +3,7 @@ const { defineConfig } = require('@playwright/test');
 
 /**
  * Minimal Playwright setup: serves the repo statically with the existing
- * `node server.js` and runs the smoke tests in e2e/ against it.
+ * `node server.js` and runs the browser tests in e2e/ against it.
  * See https://playwright.dev/docs/test-configuration
  */
 module.exports = defineConfig({
