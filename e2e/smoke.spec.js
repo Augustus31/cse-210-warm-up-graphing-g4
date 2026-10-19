@@ -53,5 +53,10 @@ test('long CSVs collapse to 10 rows and clicking a point reveals its row', async
   await expect(page.locator('#data-table tbody tr.selected-row')).toHaveCount(1);
   await expect(page.locator('#data-table tbody tr.selected-row input').first()).toHaveValue('26');
   await expect(page.locator('#chart .data-point[data-index="25"] title')).toHaveText(/Point 26: 26, /);
-  await expect(page.locator('#data-table .show-all')).toBeHidden();
+
+  // The same button collapses back to the first 10 rows.
+  await expect(page.locator('#data-table .show-all')).toHaveText('Show first 10 rows');
+  await page.locator('#data-table .show-all').click();
+  await expect(page.locator('#data-table tbody tr:visible')).toHaveCount(10);
+  await expect(page.locator('#data-table .show-all')).toHaveText('Show all 30 rows');
 });

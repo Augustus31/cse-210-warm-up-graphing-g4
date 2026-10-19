@@ -43,12 +43,12 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
   const [seriesHeader, xHeader, yHeader] = dataTable.querySelectorAll('th');
   let expanded = false;
 
-  // Hide rows past the limit unless expanded; the button reports how many there are.
+  // Hide rows past the limit unless expanded; the button toggles between the two.
   function applyCollapse() {
     const rows = [...tableBody.rows];
     rows.forEach((row, i) => { row.hidden = !expanded && i >= COLLAPSED_ROWS; });
-    showAllButton.hidden = expanded || rows.length <= COLLAPSED_ROWS;
-    showAllButton.textContent = `Show all ${rows.length} rows`;
+    showAllButton.hidden = rows.length <= COLLAPSED_ROWS;
+    showAllButton.textContent = expanded ? `Show first ${COLLAPSED_ROWS} rows` : `Show all ${rows.length} rows`;
   }
 
   // Series names come only from a three-column CSV, so they are shown read-only.
@@ -126,7 +126,7 @@ export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } =
   for (let i = 0; i < startingRowCount; i++) addRow();
   dataTable.querySelector('.add-row').addEventListener('click', () => addRow());
   showAllButton.addEventListener('click', () => {
-    expanded = true;
+    expanded = !expanded;
     applyCollapse();
   });
   tableBody.addEventListener('input', () => onPointsChange(readPoints()));
