@@ -43,11 +43,58 @@ function drawLegend(svg, names, colorFor) {
  * @returns {number} The gap between tick marks.
  */
 function niceStep(range) {
-  const roughStep = range / 4;
+  // Round to the closest nice number instead of always rounding up. Rounding
+  // up could pick a step almost as big as the range and leave one label.
+  const roughStep = range / 5;
   const power = 10 ** Math.floor(Math.log10(roughStep));
   const fraction = roughStep / power;
-  const niceFraction = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
+  const niceFraction = fraction < 1.5 ? 1 : fraction < 3 ? 2 : fraction < 7 ? 5 : 10;
   return niceFraction * power;
+}
+
+/**
+ * Rounds a tick value to the number of decimals its step needs, so floating
+ * point noise like 0.30000000000000004 becomes 0.3.
+ * @param {number} value The tick value.
+ * @param {number} step The gap between tick marks.
+ * @returns {number} The rounded tick value.
+ */
+function roundToStep(value, step) {
+  const decimals = Math.min(100, Math.max(0, -Math.floor(Math.log10(step) + 1e-9)));
+  return Number(value.toFixed(decimals));
+}
+
+/**
+ * Lists the tick values between min and max for one step size.
+ * Ticks are whole multiples of the step. Multiplying instead of adding the
+ * step each time keeps rounding errors from piling up, and the small tolerance
+ * keeps a tick that sits exactly on min or max. The limit prevents a bad range
+ * from creating an endless list of labels.
+ * @param {number} min Smallest axis value.
+ * @param {number} max Largest axis value.
+ * @param {number} step The gap between tick marks.
+ * @returns {number[]} The tick values.
+ */
+function buildTicks(min, max, step) {
+  const ticks = [];
+  const first = Math.ceil(min / step - 1e-9);
+  const last = Math.floor(max / step + 1e-9);
+  for (let i = first; i <= last && ticks.length < 100; i++) {
+    ticks.push(roundToStep(i * step, step));
+  }
+  return ticks;
+}
+
+/** Goes from one nice step to the next bigger one: 1, 2, 5, 10, 20, ... */
+function nextNiceStep(step) {
+  const power = 10 ** Math.floor(Math.log10(step) + 1e-9);
+  const fraction = Math.round(step / power);
+  return (fraction === 1 ? 2 : fraction === 2 ? 5 : 10) * power;
+}
+
+/** Number of characters in the longest tick label. */
+function longestLabel(ticks) {
+  return Math.max(...ticks.map(tick => formatTick(tick).length));
 }
 
 /**
@@ -68,8 +115,8 @@ function calculateBounds(points, key, requestedMin, requestedMax) {
   max += span * 0.08;
 
   const step = niceStep(max - min);
-  min = Math.floor(min / step) * step;
-  max = Math.ceil(max / step) * step;
+  min = roundToStep(Math.floor(min / step) * step, step);
+  max = roundToStep(Math.ceil(max / step) * step, step);
   if (Number.isFinite(requestedMin)) min = requestedMin;
   if (Number.isFinite(requestedMax)) max = requestedMax;
   if (max <= min) {
@@ -79,13 +126,14 @@ function calculateBounds(points, key, requestedMin, requestedMax) {
     else { min -= padding; max += padding; }
   }
 
-  const tickStep = niceStep(max - min);
-  const ticks = [];
-  // Start at the first clean label inside the range. The limit prevents a bad
-  // range from creating an endless list of labels.
-  for (let value = Math.ceil(min / tickStep) * tickStep, i = 0;
-    value <= max + tickStep * 1e-8 && i < 100; value += tickStep, i++) {
-    ticks.push(Number(value.toPrecision(12)));
+  // Labels are about 10px per character at the tick font size. When the x
+  // labels are too wide to fit side by side, use the next nice step instead.
+  const roomPerLabel = key === "x" ? (CHART.width - CHART.margin.left - CHART.margin.right) : Infinity;
+  let tickStep = niceStep(max - min);
+  let ticks = buildTicks(min, max, tickStep);
+  while (ticks.length > 2 && ticks.length * (longestLabel(ticks) * 10 + 12) > roomPerLabel) {
+    tickStep = nextNiceStep(tickStep);
+    ticks = buildTicks(min, max, tickStep);
   }
   return { min, max, ticks };
 }
@@ -119,8 +167,11 @@ function addText(svg, text, x, y, attributes = {}) {
   svg.appendChild(element);
 }
 
+// Ticks are already rounded to their step, so print them in full. Cutting
+// them to a few significant digits made labels like 1000000001 and
+// 1000000002 both show as 1000000000.
 function formatTick(value) {
-  return Number(value.toPrecision(6)).toString();
+  return String(value);
 }
 
 /**
