@@ -1,0 +1,11 @@
+# Generated or binary-adjacent files
+package-lock.json
+test-results/
+e2e/**/*-snapshots/
+
+# Sample data and assets
+samples/
+Resources/
+
+# Meeting records: keep as written
+administrative/
