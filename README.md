@@ -12,12 +12,12 @@ Graph Tool (CSE 210 Warm Up)
 
 - `npm run lint` checks the code with ESLint.
 - `npm run format` formats everything with Prettier; `npm run format:check` only reports unformatted files.
-- `npm install` sets up a pre-commit hook that formats the files you commit, so you normally do not need to run Prettier yourself.
-- CI runs the format check, lint, unit tests, and the Playwright tests on every push and pull request.
+- `npm install` sets up a pre-commit hook that formats the files you commit, so you normally do not need to run Prettier yourself. The hook needs Node.js 20.17 or newer. If a staged file has a syntax error, the commit is blocked until you fix it; `git commit --no-verify` skips the hook in an emergency.
+- CI runs lint, unit tests, the format check, and the Playwright tests on every push and pull request. The format check is required: unformatted files fail CI.
 
-Prettier uses its default style (double quotes, 2-space indent) and is pinned to an exact version so formatting stays the same on every machine. Generated files, `samples/`, `Resources/`, and `administrative/` are excluded in `.prettierignore`.
+Prettier uses its default style (double quotes, 2-space indent) and is pinned to an exact version so formatting stays the same on every machine. Generated files, `samples/`, `Resources/`, and `administrative/` are excluded in `.prettierignore`. `.gitattributes` keeps LF line endings on every OS, including Windows, so the format check gives the same result everywhere.
 
-ESLint uses the recommended rules with these exceptions, set in `eslint.config.js`:
+ESLint uses the recommended rules. `server.js`, `test/`, `e2e/`, and `playwright.config.js` are linted as CommonJS with Node globals; everything else as browser code. Exceptions, set in `eslint.config.js`:
 
 - `no-unused-vars` is off in `csv_loader.js` and `data_processer.js`. They are classic browser scripts that share functions through globals, so the rule reports false positives (tracked in #37).
 - `no-control-regex` is off in `graphExport.js`, which strips control characters from exported file names on purpose.
