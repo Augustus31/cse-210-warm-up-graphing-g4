@@ -1,5 +1,5 @@
 // @ts-check
-const { defineConfig } = require('@playwright/test');
+const { defineConfig } = require("@playwright/test");
 
 /**
  * Minimal Playwright setup: serves the repo statically with the existing
@@ -7,25 +7,27 @@ const { defineConfig } = require('@playwright/test');
  * See https://playwright.dev/docs/test-configuration
  */
 module.exports = defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   timeout: 30000,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? "github" : "list",
   // Baselines must be updated explicitly with --update-snapshots.
-  updateSnapshots: 'none',
-  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}{ext}',
+  updateSnapshots: "none",
+  snapshotPathTemplate: "{testDir}/{testFilePath}-snapshots/{arg}{ext}",
   expect: {
-    toHaveScreenshot: { threshold: 0, maxDiffPixels: 0, animations: 'disabled' },
+    toHaveScreenshot: {
+      threshold: 0,
+      maxDiffPixels: 0,
+      animations: "disabled",
+    },
   },
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: "http://localhost:3000",
   },
   webServer: {
-    command: 'node server.js',
-    url: 'http://localhost:3000',
+    command: "node server.js",
+    url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
-  projects: [
-    { name: 'chromium', use: { browserName: 'chromium' } },
-  ],
+  projects: [{ name: "chromium", use: { browserName: "chromium" } }],
 });
