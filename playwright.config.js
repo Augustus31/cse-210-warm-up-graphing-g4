@@ -11,6 +11,12 @@ module.exports = defineConfig({
   timeout: 30000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
+  // Baselines must be updated explicitly with --update-snapshots.
+  updateSnapshots: 'none',
+  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}{ext}',
+  expect: {
+    toHaveScreenshot: { threshold: 0, maxDiffPixels: 0, animations: 'disabled' },
+  },
   use: {
     baseURL: 'http://localhost:3000',
   },
