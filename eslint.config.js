@@ -22,7 +22,7 @@ export default [
     rules: { "no-unused-vars": "off" },
   },
   // graphExport.js intentionally matches control characters to strip them
-  // from exported file names (line 91); disable the rule for this file
+  // from exported file names (in saveGraph); disable the rule for this file
   // instead of rewriting working export code.
   {
     files: ["graphExport.js"],

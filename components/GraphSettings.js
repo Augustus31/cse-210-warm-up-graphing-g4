@@ -8,8 +8,8 @@ const doNothing = () => {};
  * @return {HTMLFieldSetElement} - The constructed DOM.
  */
 function createSettingsColumn(title, innerHtml) {
-  const column = document.createElement('fieldset');
-  column.className = 'settings-column';
+  const column = document.createElement("fieldset");
+  column.className = "settings-column";
   column.innerHTML = `<legend>${title}</legend>${innerHtml}`;
   return column;
 }
@@ -21,21 +21,32 @@ function createSettingsColumn(title, innerHtml) {
  * @param {Function} [options.onTitleChange=doNothing] - Callback triggered when the graph title input value changes.
  * @returns {HTMLFieldSetElement} The constructed DOM.
  */
-function PlotSettings({ onPlotTypeChange = doNothing, onTitleChange = doNothing }) {
-  const column = createSettingsColumn('Plot', `
+function PlotSettings({
+  onPlotTypeChange = doNothing,
+  onTitleChange = doNothing,
+}) {
+  const column = createSettingsColumn(
+    "Plot",
+    `
     <div class="radio-row">
       <label><input type="radio" name="plot-type" value="line" checked> Line</label>
       <label><input type="radio" name="plot-type" value="scatter"> Scatter</label>
     </div>
     <label>Title <input type="text" name="title" placeholder="My graph"></label>
-  `);
-  column.querySelectorAll('[name="plot-type"]').forEach(radioButton =>
-    radioButton.addEventListener('change', () => onPlotTypeChange(radioButton.value)));
-  column.querySelector('[name="title"]')
-    .addEventListener('input', event => onTitleChange(event.target.value));
+  `,
+  );
+  column
+    .querySelectorAll('[name="plot-type"]')
+    .forEach((radioButton) =>
+      radioButton.addEventListener("change", () =>
+        onPlotTypeChange(radioButton.value),
+      ),
+    );
+  column
+    .querySelector('[name="title"]')
+    .addEventListener("input", (event) => onTitleChange(event.target.value));
   return column;
 }
-
 
 /**
  * Renders the Data settings column containing the CSV file upload button and file status display.
@@ -44,19 +55,22 @@ function PlotSettings({ onPlotTypeChange = doNothing, onTitleChange = doNothing 
  * @returns {HTMLFieldSetElement} The constructed DOM.
  */
 function DataSettings({ onCsvLoad = doNothing }) {
-  const column = createSettingsColumn('Data', `
+  const column = createSettingsColumn(
+    "Data",
+    `
     <label class="file-button">
       Load CSV
       <input type="file" name="csv" accept=".csv,text/csv">
     </label>
     <span class="file-name">No file loaded</span>
-  `);
-  column.querySelector('[name="csv"]').addEventListener('change', event => {
+  `,
+  );
+  column.querySelector('[name="csv"]').addEventListener("change", (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    column.querySelector('.file-name').textContent = file.name;
+    column.querySelector(".file-name").textContent = file.name;
     onCsvLoad(file);
-    event.target.value = ''; // so choosing the same file again still fires 'change'
+    event.target.value = ""; // so choosing the same file again still fires 'change'
   });
   return column;
 }
@@ -82,7 +96,9 @@ function StyleSettings({
   onShowGridChange = doNothing,
   onPointStyleChange = doNothing,
 }) {
-  const column = createSettingsColumn('Style', `
+  const column = createSettingsColumn(
+    "Style",
+    `
     <label class="color-row">Point color <input type="color" name="point-color" value="#000000"></label>
     <label class="color-row">Line color <input type="color" name="line-color" value="#000000"></label>
     <label class="color-row">Axes color <input type="color" name="axes-color" value="#000000"></label>
@@ -97,18 +113,31 @@ function StyleSettings({
         <option value="cross">Cross</option>
       </select>
     </label>
-  `);
-  const getInput = name => column.querySelector(`[name="${name}"]`);
-  getInput('point-color').addEventListener('input', event => onPointColorChange(event.target.value));
-  getInput('line-color').addEventListener('input', event => onLineColorChange(event.target.value));
-  getInput('axes-color').addEventListener('input', event => onAxesColorChange(event.target.value));
-  getInput('background-color').addEventListener('input', event => onBackgroundColorChange(event.target.value));
-  getInput('transparent-background').addEventListener('change', event => {
-    getInput('background-color').disabled = event.target.checked;
+  `,
+  );
+  const getInput = (name) => column.querySelector(`[name="${name}"]`);
+  getInput("point-color").addEventListener("input", (event) =>
+    onPointColorChange(event.target.value),
+  );
+  getInput("line-color").addEventListener("input", (event) =>
+    onLineColorChange(event.target.value),
+  );
+  getInput("axes-color").addEventListener("input", (event) =>
+    onAxesColorChange(event.target.value),
+  );
+  getInput("background-color").addEventListener("input", (event) =>
+    onBackgroundColorChange(event.target.value),
+  );
+  getInput("transparent-background").addEventListener("change", (event) => {
+    getInput("background-color").disabled = event.target.checked;
     onTransparentBackgroundChange(event.target.checked);
   });
-  getInput('show-grid').addEventListener('change', event => onShowGridChange(event.target.checked));
-  getInput('point-style').addEventListener('change', event => onPointStyleChange(event.target.value));
+  getInput("show-grid").addEventListener("change", (event) =>
+    onShowGridChange(event.target.checked),
+  );
+  getInput("point-style").addEventListener("change", (event) =>
+    onPointStyleChange(event.target.value),
+  );
   return column;
 }
 
@@ -125,7 +154,9 @@ function AxesSettings({
   onYAxisNameChange = doNothing,
   onAxisRangeChange = doNothing,
 }) {
-  const column = createSettingsColumn('Axes', `
+  const column = createSettingsColumn(
+    "Axes",
+    `
     <label>X axis name <input type="text" name="x-name" placeholder="x"></label>
     <label>Y axis name <input type="text" name="y-name" placeholder="y"></label>
     <div class="range-grid">
@@ -134,26 +165,34 @@ function AxesSettings({
       <label>Y min <input type="number" step="any" name="y-min" placeholder="auto"></label>
       <label>Y max <input type="number" step="any" name="y-max" placeholder="auto"></label>
     </div>
-  `);
-  const getInput = name => column.querySelector(`[name="${name}"]`);
-  getInput('x-name').addEventListener('input', event => onXAxisNameChange(event.target.value));
-  getInput('y-name').addEventListener('input', event => onYAxisNameChange(event.target.value));
+  `,
+  );
+  const getInput = (name) => column.querySelector(`[name="${name}"]`);
+  getInput("x-name").addEventListener("input", (event) =>
+    onXAxisNameChange(event.target.value),
+  );
+  getInput("y-name").addEventListener("input", (event) =>
+    onYAxisNameChange(event.target.value),
+  );
 
   // Show axis names set from csv
   column.setAxisNames = function (xName, yName) {
-    if (getInput('x-name').value !== xName) getInput('x-name').value = xName;
-    if (getInput('y-name').value !== yName) getInput('y-name').value = yName;
+    if (getInput("x-name").value !== xName) getInput("x-name").value = xName;
+    if (getInput("y-name").value !== yName) getInput("y-name").value = yName;
   };
 
   // Report all four together; an empty box means "auto" (null)
-  const readNumberOrNull = name => (getInput(name).value === '' ? null : Number(getInput(name).value));
-  for (const name of ['x-min', 'x-max', 'y-min', 'y-max']) {
-    getInput(name).addEventListener('change', () => onAxisRangeChange({
-      xMin: readNumberOrNull('x-min'),
-      xMax: readNumberOrNull('x-max'),
-      yMin: readNumberOrNull('y-min'),
-      yMax: readNumberOrNull('y-max'),
-    }));
+  const readNumberOrNull = (name) =>
+    getInput(name).value === "" ? null : Number(getInput(name).value);
+  for (const name of ["x-min", "x-max", "y-min", "y-max"]) {
+    getInput(name).addEventListener("change", () =>
+      onAxisRangeChange({
+        xMin: readNumberOrNull("x-min"),
+        xMax: readNumberOrNull("x-max"),
+        yMin: readNumberOrNull("y-min"),
+        yMax: readNumberOrNull("y-max"),
+      }),
+    );
   }
   return column;
 }
@@ -164,11 +203,11 @@ function AxesSettings({
  * @returns {HTMLDivElement} The constructed DOM container.
  */
 export function GraphSettings(callbacks = {}) {
-  const graphSettings = document.createElement('div');
-  graphSettings.className = 'graph-settings';
+  const graphSettings = document.createElement("div");
+  graphSettings.className = "graph-settings";
 
-  const columns = document.createElement('div');
-  columns.className = 'settings-columns';
+  const columns = document.createElement("div");
+  columns.className = "settings-columns";
   const axesSettings = AxesSettings(callbacks);
   columns.append(
     PlotSettings(callbacks),

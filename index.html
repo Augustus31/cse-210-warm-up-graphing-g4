@@ -1,139 +1,159 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simpligraph</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simpligraph</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
+  <body>
+    <header>
+      <strong>Simpligraph</strong>
+      <img src="Resources/Images/calculator-icon.png" />
+    </header>
 
-<body>
-  <header>
-    <strong>Simpligraph</strong>
-    <img src="Resources/Images/calculator-icon.png">
-  </header>
+    <main>
+      <aside class="panel" id="data-table"></aside>
+      <section class="panel chart-panel" aria-label="Graph preview">
+        <div class="chart-toolbar">
+          <span class="chart-toolbar-title">Graph</span>
+          <label for="export-format">Format</label>
+          <select id="export-format">
+            <option value="jpeg">JPEG</option>
+            <option value="png">PNG</option>
+            <option value="svg">SVG</option>
+          </select>
+          <button type="button" id="save-graph" aria-describedby="export-hint">
+            Save graph
+          </button>
+          <span id="export-hint" role="status" hidden
+            >JPEG uses a white background when transparent.</span
+          >
+        </div>
+        <div id="chart"></div>
+        <p id="save-status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="panel bottom-area" id="graph-settings"></section>
+    </main>
+    <script src="data_processer.js"></script>
+    <script src="csv_loader.js"></script>
+    <script type="module">
+      import { GraphSettings } from "./components/GraphSettings.js";
+      import { DataTable } from "./components/DataTable.js";
+      import {
+        setGraphValue,
+        subscribeToGraph,
+        updateGraph,
+      } from "./graphState.js";
+      import { renderGraph } from "./graphRender.js";
+      import { saveGraph } from "./graphExport.js";
 
-  <main>
-    <aside class="panel" id="data-table"></aside>
-    <section class="panel chart-panel" aria-label="Graph preview">
-      <div class="chart-toolbar">
-        <span class="chart-toolbar-title">Graph</span>
-        <label for="export-format">Format</label>
-        <select id="export-format">
-          <option value="jpeg">JPEG</option>
-          <option value="png">PNG</option>
-          <option value="svg">SVG</option>
-        </select>
-        <button type="button" id="save-graph" aria-describedby="export-hint">Save graph</button>
-        <span id="export-hint" role="status" hidden>JPEG uses a white background when transparent.</span>
-      </div>
-      <div id="chart"></div>
-      <p id="save-status" role="status" aria-live="polite"></p>
-    </section>
-    <section class="panel bottom-area" id="graph-settings"></section>
-  </main>
-  <script src="data_processer.js"></script>
-  <script src="csv_loader.js"></script>
-  <script type="module">
-    import { GraphSettings } from './components/GraphSettings.js';
-    import { DataTable } from './components/DataTable.js';
-    import { setGraphValue, subscribeToGraph, updateGraph } from './graphState.js';
-    import { renderGraph } from './graphRender.js';
-    import { saveGraph } from './graphExport.js';
+      const csvStatus = document.createElement("p");
+      csvStatus.id = "csv-status";
+      csvStatus.setAttribute("role", "status");
+      csvStatus.setAttribute("aria-live", "polite");
+      const csvLoader = createCsvLoader({
+        parse: parseCSV,
+        setGraphValue,
+        onStatus: (message) => {
+          csvStatus.textContent = message;
+        },
+      });
 
-    const csvStatus = document.createElement('p');
-    csvStatus.id = 'csv-status';
-    csvStatus.setAttribute('role', 'status');
-    csvStatus.setAttribute('aria-live', 'polite');
-    const csvLoader = createCsvLoader({
-      parse: parseCSV,
-      setGraphValue,
-      onStatus: message => { csvStatus.textContent = message; },
-    });
-
-    function saveToGraph(key) {
-      return function (value) {
-        setGraphValue(key, value);
-      };
-    }
-
-    const graphSettings = GraphSettings({
-      onPlotTypeChange: saveToGraph('type'),
-      onTitleChange: saveToGraph('title'),
-      onPointColorChange: saveToGraph('pointColor'),
-      onLineColorChange: saveToGraph('lineColor'),
-      onAxesColorChange: saveToGraph('axesColor'),
-      onBackgroundColorChange: saveToGraph('backgroundColor'),
-      onTransparentBackgroundChange: saveToGraph('transparentBackground'),
-      onShowGridChange: saveToGraph('showGrid'),
-      onPointStyleChange: saveToGraph('pointStyle'),
-      onXAxisNameChange: saveToGraph('xAxisName'),
-      onYAxisNameChange: saveToGraph('yAxisName'),
-      onAxisRangeChange: saveToGraph('range'),
-      onCsvLoad(file) {
-        return csvLoader.load(file);
-      },
-    });
-    document.getElementById('graph-settings').append(graphSettings);
-
-    const dataTable = DataTable({
-      onPointsChange(points) {
-        csvLoader.cancel();
-        setGraphValue('points', points);
-      },
-    });
-    document.getElementById('data-table').append(dataTable);
-
-    document.querySelector('[name="csv"]').closest('.settings-column').append(csvStatus);
-    const chart = document.getElementById('chart');
-    // Clicking a point jumps to its row in the data table.
-    chart.addEventListener('click', event => {
-      const mark = event.target.closest('.data-point');
-      if (mark) dataTable.focusRow(Number(mark.dataset.index));
-    });
-    const saveButton = document.getElementById('save-graph');
-    const formatSelect = document.getElementById('export-format');
-    const saveStatus = document.getElementById('save-status');
-    const exportHint = document.getElementById('export-hint');
-    let transparentBackground = false;
-    function updateExportHint() {
-      exportHint.hidden = !(transparentBackground && formatSelect.value === 'jpeg');
-    }
-    formatSelect.addEventListener('change', updateExportHint);
-    saveButton.addEventListener('click', async () => {
-      saveButton.disabled = true;
-      formatSelect.disabled = true;
-      saveStatus.textContent = 'Preparing download…';
-      try {
-        const filename = await saveGraph(chart, formatSelect.value);
-        saveStatus.textContent = `Download started: ${filename}`;
-      } catch (error) {
-        saveStatus.textContent = chart.querySelector('svg')
-          ? 'Unable to save the graph. Please try again.'
-          : error.message;
-      } finally {
-        saveButton.disabled = false;
-        formatSelect.disabled = false;
+      function saveToGraph(key) {
+        return function (value) {
+          setGraphValue(key, value);
+        };
       }
-    });
-    subscribeToGraph(graph => {
-      renderGraph(graph, chart);
-      transparentBackground = graph.transparentBackground;
-      updateExportHint();
-      if (!saveButton.disabled) saveStatus.textContent = '';
-    });
-    subscribeToGraph(graph => dataTable.setPoints(graph.points));
-    subscribeToGraph(graph => graphSettings.setAxisNames(graph.xAxisName, graph.yAxisName));
-    subscribeToGraph(graph => dataTable.setAxisNames(graph.xAxisName, graph.yAxisName));
-    updateGraph();
-  </script>
-</body>
-</html>
 
+      const graphSettings = GraphSettings({
+        onPlotTypeChange: saveToGraph("type"),
+        onTitleChange: saveToGraph("title"),
+        onPointColorChange: saveToGraph("pointColor"),
+        onLineColorChange: saveToGraph("lineColor"),
+        onAxesColorChange: saveToGraph("axesColor"),
+        onBackgroundColorChange: saveToGraph("backgroundColor"),
+        onTransparentBackgroundChange: saveToGraph("transparentBackground"),
+        onShowGridChange: saveToGraph("showGrid"),
+        onPointStyleChange: saveToGraph("pointStyle"),
+        onXAxisNameChange: saveToGraph("xAxisName"),
+        onYAxisNameChange: saveToGraph("yAxisName"),
+        onAxisRangeChange: saveToGraph("range"),
+        onCsvLoad(file) {
+          return csvLoader.load(file);
+        },
+      });
+      document.getElementById("graph-settings").append(graphSettings);
+
+      const dataTable = DataTable({
+        onPointsChange(points) {
+          csvLoader.cancel();
+          setGraphValue("points", points);
+        },
+      });
+      document.getElementById("data-table").append(dataTable);
+
+      document
+        .querySelector('[name="csv"]')
+        .closest(".settings-column")
+        .append(csvStatus);
+      const chart = document.getElementById("chart");
+      // Clicking a point jumps to its row in the data table.
+      chart.addEventListener("click", (event) => {
+        const mark = event.target.closest(".data-point");
+        if (mark) dataTable.focusRow(Number(mark.dataset.index));
+      });
+      const saveButton = document.getElementById("save-graph");
+      const formatSelect = document.getElementById("export-format");
+      const saveStatus = document.getElementById("save-status");
+      const exportHint = document.getElementById("export-hint");
+      let transparentBackground = false;
+      function updateExportHint() {
+        exportHint.hidden = !(
+          transparentBackground && formatSelect.value === "jpeg"
+        );
+      }
+      formatSelect.addEventListener("change", updateExportHint);
+      saveButton.addEventListener("click", async () => {
+        saveButton.disabled = true;
+        formatSelect.disabled = true;
+        saveStatus.textContent = "Preparing download…";
+        try {
+          const filename = await saveGraph(chart, formatSelect.value);
+          saveStatus.textContent = `Download started: ${filename}`;
+        } catch (error) {
+          saveStatus.textContent = chart.querySelector("svg")
+            ? "Unable to save the graph. Please try again."
+            : error.message;
+        } finally {
+          saveButton.disabled = false;
+          formatSelect.disabled = false;
+        }
+      });
+      subscribeToGraph((graph) => {
+        renderGraph(graph, chart);
+        transparentBackground = graph.transparentBackground;
+        updateExportHint();
+        if (!saveButton.disabled) saveStatus.textContent = "";
+      });
+      subscribeToGraph((graph) => dataTable.setPoints(graph.points));
+      subscribeToGraph((graph) =>
+        graphSettings.setAxisNames(graph.xAxisName, graph.yAxisName),
+      );
+      subscribeToGraph((graph) =>
+        dataTable.setAxisNames(graph.xAxisName, graph.yAxisName),
+      );
+      updateGraph();
+    </script>
+  </body>
+</html>
 
 <!-- icon credit: https://creazilla.com/media/icon/3248798/calculator -->
