@@ -4,11 +4,12 @@
   "private": true,
   "description": "A graphing tool for CSE 210.",
   "engines": {
-    "node": ">=20.17"
+    "node": ">=22.5"
   },
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
+    "test:coverage": "node coverage-ratchet.js",
     "test:e2e": "playwright test",
     "lint": "eslint .",
     "format": "prettier --write .",
