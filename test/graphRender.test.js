@@ -144,6 +144,17 @@ test("shows an empty-state message when there are no valid points", () => {
   assert.match(container.children[0].textContent, /complete X\/Y pair/);
 });
 
+test("a missing graph shows the empty-state message", () => {
+  for (const graph of [null, undefined, "line"]) {
+    const { renderGraph, container } = setupRenderer();
+
+    renderGraph(graph, container);
+
+    assert.equal(container.children.length, 1);
+    assert.equal(container.children[0].className, "chart-empty");
+  }
+});
+
 test("scatter graphs render valid points, labels and configured colors", () => {
   const { renderGraph, container } = setupRenderer();
 
