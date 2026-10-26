@@ -593,11 +593,12 @@ function renderLineChart(graph, container) {
 
 /**
  * Renders graph state from the UI into the chart container.
- * @param {Object} data Graph settings and point data from graphState.js.
+ * A missing graph renders the empty-state message instead of throwing.
+ * @param {Object} graph Graph settings and point data from graphState.js.
  * @param {Element} container The chart section.
  */
-export function renderGraph(data, container) {
-  const graph = data && typeof data === "object" ? data : {};
-  if (graph.type === "line") return renderLineChart(graph, container);
-  return renderScatterPlot(graph, container);
+export function renderGraph(graph, container) {
+  const settings = graph && typeof graph === "object" ? graph : {};
+  if (settings.type === "line") return renderLineChart(settings, container);
+  return renderScatterPlot(settings, container);
 }
