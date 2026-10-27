@@ -1,6 +1,11 @@
 const doNothing = () => {};
 
-// Builds the X or Y box for one row
+/**
+ * Builds a numeric input element for an axis coordinate cell.
+ * @param {string} axis - The axis name identifier ('X' or 'Y').
+ * @param {number} rowNumber - The row index/number for accessibility labeling.
+ * @returns {HTMLInputElement} The constructed number input DOM element.
+ */
 function createNumberInput(axis, rowNumber) {
   const input = document.createElement('input');
   input.type = 'number';
@@ -9,6 +14,13 @@ function createNumberInput(axis, rowNumber) {
   return input;
 }
 
+/**
+ * Builds a data table for graphing.
+ * @param {Object} [options={}] - The callback configuration object.
+ * @param {Function} [options.onPointsChange=doNothing] - Callback triggered when any point value changes.
+ * @param {number} [options.startingRowCount=3] - The number of rows to start with.
+ * @returns {HTMLDivElement} The constructed DOM.
+ */
 export function DataTable({ onPointsChange = doNothing, startingRowCount = 3 } = {}) {
   const dataTable = document.createElement('div');
   dataTable.className = 'data-table';
