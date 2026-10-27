@@ -30,6 +30,9 @@ function parseNumber(value) {
     return null;
 }
 
+// Parses CSV text into an object with headers, data, and warnings.
+// The data is an array of { x, y } objects. The headers are { x, y } strings.
+// If the CSV is invalid, returns { success: false, error } instead.
 function parseCSV(text) {
     if (typeof text !== "string") {
         return {
