@@ -92,12 +92,28 @@ function svgElement(name, attributes = {}) {
   return element;
 }
 
+/**
+ * Adds a text label to the SVG.
+ * @param {SVGElement} svg - The SVG element to draw in.
+ * @param {string} text - The text to show.
+ * @param {number} x - The x position in the SVG.
+ * @param {number} y - The y position in the SVG.
+ * @param {Object<string, string|number>} attributes - Extra attributes, such as alignment or class.
+ * @returns {void}
+ */
 function addText(svg, text, x, y, attributes = {}) {
   const element = svgElement("text", { x, y, ...attributes });
   element.textContent = text;
   svg.appendChild(element);
 }
 
+/**
+ * Formats a tick value for its axis label.
+ * Rounding to 6 significant digits hides floating-point noise,
+ * so a tick shows "0.3" instead of "0.30000000000000004".
+ * @param {number} value - The tick value.
+ * @returns {string} The label text.
+ */
 function formatTick(value) {
   return Number(value.toPrecision(6)).toString();
 }
