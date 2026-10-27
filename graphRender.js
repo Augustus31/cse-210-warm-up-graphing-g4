@@ -6,10 +6,9 @@ const CHART = { width: 800, height: 400, margin: { top: 52, right: 32, bottom: 7
 let clipIdCounter = 0;
 
 /**
- * Chooses a simple number to put between each pair of tick marks.
- * This keeps the axis from being filled with messy decimal numbers.
- * @param {number} range The size of the axis range.
- * @returns {number} The gap between tick marks.
+ * Picks a clean interval for the axis labels, such as 1, 2, or 5.
+ * @param {number} range - The distance covered by the axis.
+ * @returns {number} The distance between tick marks.
  */
 function niceStep(range) {
   const roughStep = range / 4;
@@ -20,13 +19,13 @@ function niceStep(range) {
 }
 
 /**
- * Finds the start, end, and labels for one axis.
- * We leave a little room around the points so they do not touch the edge.
- * @param {Object[]} points The points currently in the graph.
- * @param {string} key Use "x" for the horizontal axis or "y" for the vertical axis.
- * @param {?number} requestedMin A minimum entered in the UI, if there is one.
- * @param {?number} requestedMax Same above（but it's mamimum)
- * @returns {{min: number, max: number, ticks: number[]}} The axis limits and labels.
+ * Finds the axis limits and tick labels. It leaves a little room around the data,
+ * then starts the labels at a clean interval inside the range.
+ * @param {Array<{x: number, y: number}>} points - The valid graph points.
+ * @param {"x"|"y"} key - The axis value to use.
+ * @param {?number} requestedMin - The minimum set in the UI.
+ * @param {?number} requestedMax - The maximum set in the UI.
+ * @returns {{min: number, max: number, ticks: number[]}} The axis range and tick labels.
  */
 function calculateBounds(points, key, requestedMin, requestedMax) {
   const values = points.map(point => point[key]);
@@ -60,14 +59,14 @@ function calculateBounds(points, key, requestedMin, requestedMax) {
 }
 
 /**
- * Turns a graph value into the right spot on the SVG.
- * SVG counts down from the top, so the y values need to be flipped.
- * @param {number} min Smallest graph value.
- * @param {number} max Largest graph value.
- * @param {number} pixelMin First screen position.
- * @param {number} pixelMax Last screen position.
- * @param {boolean} invert Flip the result for the y axis.
- * @returns {(value: number) => number} A function that turns values into positions.
+ * Maps a graph value to its position in the SVG chart.
+ * SVG y-coordinates grow downward, so the y-axis uses the invert option.
+ * @param {number} min - The smallest value on the axis.
+ * @param {number} max - The largest value on the axis.
+ * @param {number} pixelMin - The first pixel position on the axis.
+ * @param {number} pixelMax - The last pixel position on the axis.
+ * @param {boolean} invert - Whether to flip the positions for the y-axis.
+ * @returns {function(number): number} A function that maps values to pixel positions.
  */
 function createScale(min, max, pixelMin, pixelMax, invert = false) {
   return value => {
@@ -103,8 +102,16 @@ function formatTick(value) {
   return Number(value.toPrecision(6)).toString();
 }
 
-// Preserve the shared axes and scale behavior used by the existing renderer.
-/** Draws both axes, their ticks, and the configured axis labels. */
+/**
+ * Draws both axes, their tick marks, and the labels from the graph settings.
+ * @param {SVGElement} svg - The SVG element to draw in.
+ * @param {{ticks: number[]}} xBounds - The x-axis tick values.
+ * @param {{ticks: number[]}} yBounds - The y-axis tick values.
+ * @param {function(number): number} scaleX - Maps x values to SVG positions.
+ * @param {function(number): number} scaleY - Maps y values to SVG positions.
+ * @param {Object} graph - The graph settings for axis names and color.
+ * @returns {void}
+ */
 function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph) {
   const { width, height, margin } = CHART;
   const left = margin.left;
@@ -138,7 +145,14 @@ function drawAxes(svg, xBounds, yBounds, scaleX, scaleY, graph) {
   });
 }
 
-/** Filters input points and prepares the SVG, scales, and axes. */
+/**
+ * Filters the points and prepares the SVG chart and its scales.
+ * If there are no complete numeric points, it shows a short message instead.
+ * @param {Object} graph - The current graph settings and point data.
+ * @param {Element} container - The chart area that will hold the SVG.
+ * @param {string} title - A fallback label for the chart's accessible name.
+ * @returns {?Object} The prepared chart parts, or null when there is no chart to draw.
+ */
 function prepareChart(graph, container, title) {
   if (!container || typeof container.replaceChildren !== "function") return null;
   const points = Array.isArray(graph.points)
@@ -177,6 +191,15 @@ function prepareChart(graph, container, title) {
   return { svg, points: visiblePoints, allPoints: points, scaleX, scaleY };
 }
 
+/**
+ * Draws the given points using the selected shape and color.
+ * @param {SVGElement} svg - The SVG element to draw in.
+ * @param {Array<{x: number, y: number}>} points - The points to draw.
+ * @param {function(number): number} scaleX - Maps x values to SVG positions.
+ * @param {function(number): number} scaleY - Maps y values to SVG positions.
+ * @param {Object} graph - The graph settings for point shape and color.
+ * @returns {void}
+ */
 function drawPoints(svg, points, scaleX, scaleY, graph) {
   const color = graph.pointColor || "var(--color-ink, #000000)";
   for (const point of points) {
@@ -199,6 +222,12 @@ function drawPoints(svg, points, scaleX, scaleY, graph) {
   }
 }
 
+/**
+ * Draws the points as a scatter plot.
+ * @param {Object} graph - The graph settings and point data.
+ * @param {Element} container - The chart area that will hold the SVG.
+ * @returns {void}
+ */
 function renderScatterPlot(graph, container) {
   const chart = prepareChart(graph, container, "Scatter graph");
   if (!chart) return;
@@ -206,10 +235,19 @@ function renderScatterPlot(graph, container) {
   container.replaceChildren(chart.svg);
 }
 
+/**
+ * Draws the points and connects them in x-order.
+ * The line can reach the chart edge, but the SVG clips it to the plot area.
+ * @param {Object} graph - The graph settings and point data.
+ * @param {Element} container - The chart area that will hold the SVG.
+ * @returns {void}
+ */
 function renderLineChart(graph, container) {
   const chart = prepareChart(graph, container, "Line graph");
   if (!chart) return;
 
+  // Keep off-range points in the line so it reaches the chart edge.
+  // The clip path trims anything outside the plot area.
   const allSorted = [...chart.allPoints].sort((a, b) => a.x - b.x);
   if (allSorted.length > 1) {
     const { width, height, margin } = CHART;
@@ -235,16 +273,16 @@ function renderLineChart(graph, container) {
     }));
   }
 
-  // Dots: only the ones inside the range, sorted for consistency.
+  // Markers outside the selected range stay hidden.
   const sortedPoints = [...chart.points].sort((a, b) => a.x - b.x);
   drawPoints(chart.svg, sortedPoints, chart.scaleX, chart.scaleY, graph);
   container.replaceChildren(chart.svg);
 }
 
 /**
- * Renders graph state from the UI into the chart container.
- * @param {Object} data Graph settings and point data from graphState.js.
- * @param {Element} container The chart section.
+ * Draws the current graph in the chart area.
+ * @param {Object} data - The graph settings and points from the UI.
+ * @param {Element} container - The chart area where the SVG goes.
  */
 export function renderGraph(data, container) {
   const graph = data && typeof data === "object" ? data : {};
