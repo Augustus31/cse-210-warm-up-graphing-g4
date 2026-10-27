@@ -1,4 +1,7 @@
+/* SVG namespace used to render graph */
 const SVG_NS = "http://www.w3.org/2000/svg";
+
+/* Default chart size */
 const CHART = { width: 800, height: 400, margin: { top: 52, right: 32, bottom: 76, left: 92 } };
 let clipIdCounter = 0;
 
@@ -73,8 +76,19 @@ function createScale(min, max, pixelMin, pixelMax, invert = false) {
   };
 }
 
+/**
+ * Create SVG element
+ * Commonly used when adding to DOM later with svg.appendChild(svgElement())
+ * @param {string} name - SVG name of element (e.g. "line", "circle")
+ * @param {Object<string, string|number>} attributes - attribute names and their values (e.g. position)
+ * @returns {SVGElement} The new SVG element
+ *
+ * @example
+ * svg.appendChild(svgElement("circle", { cx: x, cy: y, r: 7, fill: color, class: "data-point" }))
+ */
 function svgElement(name, attributes = {}) {
   const element = document.createElementNS(SVG_NS, name);
+
   for (const [key, value] of Object.entries(attributes)) element.setAttribute(key, value);
   return element;
 }
