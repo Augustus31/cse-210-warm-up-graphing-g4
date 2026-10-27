@@ -1,3 +1,12 @@
+/**
+ * Creates a loader for csv file, and returns functions to load a file or cancel a load.
+* @param {function(string): Object} options.parse - Checks the CSV text and returns the result (parseCSV).
+* @param {function(string): void} options.onStatus - Shows a message to the user.
+* @param {function(string, *): void} [options.setGraphValue] - Saves a value to the graph state. Does nothing by default.
+* @returns {{load: Function, cancel: Function}} Functions to load a file and to cancel the current load.
+*/
+
+
 function createCsvLoader({ parse, onStatus, setGraphValue = () => {} }) {
     let requestId = 0;
 
